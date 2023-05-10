@@ -3,9 +3,9 @@ use core::{marker::PhantomData, num::NonZeroU8};
 use crate::{backing::Backing, prime_bag_iter::PrimeBagIter};
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Ord, Eq)]
-pub struct PrimeBag<B: Backing, E: Into<usize> + From<usize>>(B, PhantomData<E>);
+pub struct PrimeBag<B: Backing, E>(B, PhantomData<E>);
 
-impl<B: Backing, E: Into<usize> + From<usize>> IntoIterator for PrimeBag<B, E> {
+impl<B: Backing, E: From<usize>> IntoIterator for PrimeBag<B, E> {
     type Item = E;
 
     type IntoIter = PrimeBagIter<B, E>;
@@ -18,13 +18,13 @@ impl<B: Backing, E: Into<usize> + From<usize>> IntoIterator for PrimeBag<B, E> {
 assert_eq_size!(PrimeBag<NonZeroU8, usize>, u8);
 assert_eq_size!(Option<PrimeBag<NonZeroU8, usize>>, u8);
 
-impl<B: Backing, E: Into<usize> + From<usize>> Default for PrimeBag<B, E> {
+impl<B: Backing, E> Default for PrimeBag<B, E> {
     fn default() -> Self {
         Self(B::ONE, Default::default())
     }
 }
 
-impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
+impl<B: Backing, E: Into<usize>> PrimeBag<B, E> {
     /// Try to extend the bag with elements from an iterator.
     /// Does not modify this bag.
     /// Returns `None` if the resulting bag would be too large
@@ -40,8 +40,8 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
     #[must_use]
     pub fn try_extend<T: IntoIterator<Item = E>>(&self, iter: T) -> Option<Self> {
         let mut b = self.0;
-        for t in iter {
-            let u: usize = t.into();
+        for e in iter {
+            let u: usize = e.into();
             let p = B::get_prime(u)?;
             b = b.checked_mul(p)?;
         }
@@ -94,42 +94,6 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
         return 0;
     }
 
-    /// Returns whether this is a superset of the `rhs` bag.
-    /// This is true if every element in the `rhs` bag is contained at least as many times in this.
-    /// Note that this will also return true if the two bags are equal.
-    /// ```
-    /// use core::num::NonZeroU16;
-    /// use prime_bag::prime_bag::PrimeBag;
-    /// let super_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
-    /// let sub_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,3]).unwrap();
-    ///
-    /// assert!(super_bag.is_superset(&sub_bag));
-    /// assert!(super_bag.is_superset(&super_bag));
-    /// assert!(!sub_bag.is_superset(&super_bag));
-    /// ```
-    #[must_use]
-    pub fn is_superset(&self, rhs: &Self) -> bool {
-        self.0.is_multiple(rhs.0)
-    }
-
-    /// Returns whether this is a subset of the `rhs` bag.
-    /// This is true if every element in this bag is contained at least as many times in `rhs`.
-    /// Note that this will also return true if the two bags are equal.
-    /// ```
-    /// use core::num::NonZeroU16;
-    /// use prime_bag::prime_bag::PrimeBag;
-    /// let super_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
-    /// let sub_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,3]).unwrap();
-    ///
-    /// assert!(sub_bag.is_subset(&super_bag));
-    /// assert!(sub_bag.is_subset(&sub_bag));
-    /// assert!(!super_bag.is_subset(&sub_bag));
-    /// ```
-    #[must_use]
-    pub fn is_subset(&self, rhs: &Self) -> bool {
-        rhs.is_superset(self)
-    }
-
     /// Returns whether the bag contains a particular `value`.
     /// ```
     /// use core::num::NonZeroU16;
@@ -166,19 +130,6 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
             }
         }
         false
-    }
-
-    /// Returns whether the bag contains zero elements.
-    /// ```
-    /// use core::num::NonZeroU16;
-    /// use prime_bag::prime_bag::PrimeBag;
-    /// let bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
-    /// assert!(!bag.is_empty());
-    /// assert!(PrimeBag::<NonZeroU16, usize>::default().is_empty());
-    /// ```
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0 == B::ONE
     }
 
     /// Try to create a new bag with the `value` inserted.
@@ -220,6 +171,57 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
         let p2 = p.checked_pow(count)?;
         let b = self.0.checked_mul(p2)?;
         Some(Self(b, self.1))
+    }
+}
+
+impl<B: Backing, E> PrimeBag<B, E> {
+    /// Returns whether this is a superset of the `rhs` bag.
+    /// This is true if every element in the `rhs` bag is contained at least as many times in this.
+    /// Note that this will also return true if the two bags are equal.
+    /// ```
+    /// use core::num::NonZeroU16;
+    /// use prime_bag::prime_bag::PrimeBag;
+    /// let super_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
+    /// let sub_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,3]).unwrap();
+    ///
+    /// assert!(super_bag.is_superset(&sub_bag));
+    /// assert!(super_bag.is_superset(&super_bag));
+    /// assert!(!sub_bag.is_superset(&super_bag));
+    /// ```
+    #[must_use]
+    pub fn is_superset(&self, rhs: &Self) -> bool {
+        self.0.is_multiple(rhs.0)
+    }
+
+    /// Returns whether this is a subset of the `rhs` bag.
+    /// This is true if every element in this bag is contained at least as many times in `rhs`.
+    /// Note that this will also return true if the two bags are equal.
+    /// ```
+    /// use core::num::NonZeroU16;
+    /// use prime_bag::prime_bag::PrimeBag;
+    /// let super_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
+    /// let sub_bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,3]).unwrap();
+    ///
+    /// assert!(sub_bag.is_subset(&super_bag));
+    /// assert!(sub_bag.is_subset(&sub_bag));
+    /// assert!(!super_bag.is_subset(&sub_bag));
+    /// ```
+    #[must_use]
+    pub fn is_subset(&self, rhs: &Self) -> bool {
+        rhs.is_superset(self)
+    }
+
+    /// Returns whether the bag contains zero elements.
+    /// ```
+    /// use core::num::NonZeroU16;
+    /// use prime_bag::prime_bag::PrimeBag;
+    /// let bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
+    /// assert!(!bag.is_empty());
+    /// assert!(PrimeBag::<NonZeroU16, usize>::default().is_empty());
+    /// ```
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0 == B::ONE
     }
 
     /// Try to create the union of this bag and `rhs`.
