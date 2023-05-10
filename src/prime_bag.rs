@@ -15,10 +15,6 @@ impl<B: Backing, E: Into<usize> + From<usize>> IntoIterator for PrimeBag<B, E> {
     }
 }
 
-
-
-
-
 assert_eq_size!(PrimeBag<NonZeroU8, usize>, u8);
 assert_eq_size!(Option<PrimeBag<NonZeroU8, usize>>, u8);
 
@@ -29,19 +25,20 @@ impl<B: Backing, E: Into<usize> + From<usize>> Default for PrimeBag<B, E> {
 }
 
 impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
-
     /// Try to extend the bag with elements from an iterator.
+    /// Does not modify this bag.
+    /// Returns `None` if the resulting bag would be too large
     /// ```
     /// use core::num::NonZeroU16;
     /// use prime_bag::prime_bag::PrimeBag;
     /// let bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2]).unwrap();
     ///
-    /// let bag2 = bag.try_with_extended([3,3,3]).unwrap();
+    /// let bag2 = bag.try_extend([3,3,3]).unwrap();
     /// assert_eq!(bag.count_instances(3), 0);
     /// assert_eq!(bag2.count_instances(3), 3);
     /// ```
     #[must_use]
-    pub fn try_with_extended<T: IntoIterator<Item = E>>(&self, iter: T) -> Option<Self> {
+    pub fn try_extend<T: IntoIterator<Item = E>>(&self, iter: T) -> Option<Self> {
         let mut b = self.0;
         for t in iter {
             let u: usize = t.into();
@@ -52,7 +49,8 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
         Some(Self(b, self.1))
     }
 
-    /// Creates a bag from an iterator
+    /// Tries to create a bag from an iterator of values.
+    /// Returns `None` if the resulting bag would be too large.
     /// ```
     /// use core::num::NonZeroU16;
     /// use prime_bag::prime_bag::PrimeBag;
@@ -63,7 +61,7 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
     /// ```
     #[must_use]
     pub fn try_from_iter<T: IntoIterator<Item = E>>(iter: T) -> Option<Self> {
-        Self::default().try_with_extended(iter)
+        Self::default().try_extend(iter)
     }
 
     /// Returns the number of instances of value in the bag.
@@ -75,6 +73,7 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
     /// assert_eq!(bag.count_instances(1), 1);
     /// assert_eq!(bag.count_instances(2), 2);
     /// assert_eq!(bag.count_instances(3), 3);
+    /// assert_eq!(bag.count_instances(1000), 0);
     /// ```
     #[must_use]
     pub fn count_instances(&self, value: E) -> usize {
@@ -138,6 +137,7 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
     /// let bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
     /// assert!(bag.contains(2));
     /// assert!(!bag.contains(4));
+    /// assert!(!bag.contains(1000)); // it is impossible for the bag to contain this value
     /// ```
     #[must_use]
     pub fn contains(&self, value: E) -> bool {
@@ -155,6 +155,7 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
     /// let bag = PrimeBag::<NonZeroU16, usize>::try_from_iter([1,2,2,3,3,3]).unwrap();
     /// assert!(bag.contains_at_least(2, 2));
     /// assert!(!bag.contains_at_least(2,3));
+    /// assert!(!bag.contains_at_least(1000, 1)); // it is impossible for the bag to contain this value
     /// ```
     #[must_use]
     pub fn contains_at_least(&self, value: E, n: u32) -> bool {
@@ -277,7 +278,7 @@ impl<B: Backing, E: Into<usize> + From<usize>> PrimeBag<B, E> {
     /// ```
     #[must_use]
     pub fn intersection(&self, rhs: &Self) -> Self {
-        let gcd =self.0.gcd(rhs.0);
+        let gcd = self.0.gcd(rhs.0);
         Self(gcd, Default::default())
     }
 }

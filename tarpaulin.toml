@@ -1,0 +1,8 @@
+[all_features]
+all-features = true
+
+[run-types]
+run-types = ["Tests", "Doctests"]
+
+[report]
+out = ["Lcov"]
