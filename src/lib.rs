@@ -4,10 +4,13 @@ extern crate static_assertions;
 
 pub mod iter;
 // mod nonzero_u8;
+pub mod group_iter;
 mod helpers;
 
 use core::marker::PhantomData;
 use core::num::*;
+
+use group_iter::*;
 
 use crate::{helpers::*, iter::*};
 
@@ -222,10 +225,36 @@ from_bag_to_bag!(PrimeBag32<E>, PrimeBag128<E>);
 
 from_bag_to_bag!(PrimeBag64<E>, PrimeBag128<E>);
 
+macro_rules! group_iterator {
+    ($bag_x: ty, $iter_x: ty) => {
+        impl<E: From<usize>> $bag_x {
+            /// Iterate through groups of elements, each item of the iterator will be the element and its count.
+            /// Elements which are not present are skipped.
+            pub fn iter_groups(&self) -> impl Iterator<Item = (E, usize)> {
+                <$iter_x>::new(self.0)
+            }
+        }
+    };
+}
+
+group_iterator!(PrimeBag8<E>, PrimeBagGroupIter8<E>);
+group_iterator!(PrimeBag16<E>, PrimeBagGroupIter16<E>);
+group_iterator!(PrimeBag32<E>, PrimeBagGroupIter32<E>);
+group_iterator!(PrimeBag64<E>, PrimeBagGroupIter64<E>);
+group_iterator!(PrimeBag128<E>, PrimeBagGroupIter128<E>);
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
+
+    #[test]
+    fn test_iter_groups() {
+        let bag = PrimeBag32::<usize>::try_from_iter([1,1,1, 3, 3, 4,4,4]).unwrap();
+        let v: Vec<_> = bag.iter_groups().collect();
+
+        assert_eq!(v, [(1, 3), (3,2), (4, 3)])
+    }
 
     #[test]
     fn test_from_bag_to_bag() {
