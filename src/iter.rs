@@ -45,7 +45,6 @@ macro_rules! prime_bag_iter {
     };
 }
 
-
 prime_bag_iter!(PrimeBagIter8, Helpers8, NonZeroU8);
 prime_bag_iter!(PrimeBagIter16, Helpers16, NonZeroU16);
 prime_bag_iter!(PrimeBagIter32, Helpers32, NonZeroU32);

@@ -2,7 +2,7 @@ use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
 
 macro_rules! helpers {
     ($helpers_x: ident, $nonzero_ux: ty, $ux: ty, $num_primes: expr, $gcd_func: expr) => {
-        pub  (crate)  struct $helpers_x;
+        pub(crate) struct $helpers_x;
 
         impl $helpers_x {
             const PRIMES: [$nonzero_ux; Self::NUM_PRIMES] = {
@@ -67,7 +67,7 @@ macro_rules! helpers {
                 }
             }
 
-            pub (crate) const fn is_multiple(x: $nonzero_ux, other: $nonzero_ux) -> bool {
+            pub(crate) const fn is_multiple(x: $nonzero_ux, other: $nonzero_ux) -> bool {
                 let x: $ux = x.get();
                 let other: $ux = other.get();
 
@@ -75,7 +75,7 @@ macro_rules! helpers {
                 rem == 0
             }
 
-            pub  (crate)  const fn gcd(lhs: $nonzero_ux, rhs: $nonzero_ux) -> $nonzero_ux {
+            pub(crate) const fn gcd(lhs: $nonzero_ux, rhs: $nonzero_ux) -> $nonzero_ux {
                 $gcd_func(lhs, rhs)
             }
         }
@@ -100,8 +100,6 @@ const_assert_eq!(Helpers16::PRIMES[127].get(), 719u16);
 const_assert_eq!(Helpers32::PRIMES[127].get(), 719u32);
 const_assert_eq!(Helpers64::PRIMES[127].get(), 719u64);
 const_assert_eq!(Helpers128::PRIMES[127].get(), 719u128);
-
-
 
 #[cfg(test)]
 mod tests {
