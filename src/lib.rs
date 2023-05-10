@@ -296,11 +296,69 @@ prime_bag!(PrimeBag32, Helpers32, NonZeroU32, u32);
 prime_bag!(PrimeBag64, Helpers64, NonZeroU64, u64);
 prime_bag!(PrimeBag128, Helpers128, NonZeroU128, u128);
 
-impl<E: From<usize>> IntoIterator for PrimeBag16<E> {
-    type Item = E;
-    type IntoIter = PrimeBagIter16<E>;
+macro_rules! into_iterator {
+    ($bag_x: ty, $iter_x: ty) => {
+        impl<E: From<usize>> IntoIterator for $bag_x {
+            type Item = E;
+            type IntoIter = $iter_x;
 
-    fn into_iter(self) -> Self::IntoIter {
-        Self::IntoIter::new(self.0)
+            fn into_iter(self) -> Self::IntoIter {
+                Self::IntoIter::new(self.0)
+            }
+        }
+    };
+}
+
+into_iterator!(PrimeBag8<E>, PrimeBagIter8<E>);
+into_iterator!(PrimeBag16<E>, PrimeBagIter16<E>);
+into_iterator!(PrimeBag32<E>, PrimeBagIter32<E>);
+into_iterator!(PrimeBag64<E>, PrimeBagIter64<E>);
+into_iterator!(PrimeBag128<E>, PrimeBagIter128<E>);
+
+macro_rules! from_bag_to_bag {
+    ($t_from: ty, $t_into: ty) => {
+        impl<E> From<$t_from> for $t_into {
+            fn from(value: $t_from) -> Self {
+                Self(value.0.into(), PhantomData)
+            }
+        }
+    };
+}
+
+from_bag_to_bag!(PrimeBag8<E>, PrimeBag16<E>);
+from_bag_to_bag!(PrimeBag8<E>, PrimeBag32<E>);
+from_bag_to_bag!(PrimeBag8<E>, PrimeBag64<E>);
+from_bag_to_bag!(PrimeBag8<E>, PrimeBag128<E>);
+
+from_bag_to_bag!(PrimeBag16<E>, PrimeBag32<E>);
+from_bag_to_bag!(PrimeBag16<E>, PrimeBag64<E>);
+from_bag_to_bag!(PrimeBag16<E>, PrimeBag128<E>);
+
+from_bag_to_bag!(PrimeBag32<E>, PrimeBag64<E>);
+from_bag_to_bag!(PrimeBag32<E>, PrimeBag128<E>);
+
+from_bag_to_bag!(PrimeBag64<E>, PrimeBag128<E>);
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_from_bag_to_bag() {
+        let b8 = PrimeBag8::<usize>::try_from_iter([1, 2, 3]).unwrap();
+
+        let b16: PrimeBag16<usize> = b8.into();
+        let b32: PrimeBag32<usize> = b8.into();
+        let b64: PrimeBag64<usize> = b8.into();
+        let b128: PrimeBag128<usize> = b8.into();
+
+        assert_eq!(b16, PrimeBag16::<usize>::try_from_iter([1, 2, 3]).unwrap());
+        assert_eq!(b32, PrimeBag32::<usize>::try_from_iter([1, 2, 3]).unwrap());
+        assert_eq!(b64, PrimeBag64::<usize>::try_from_iter([1, 2, 3]).unwrap());
+        assert_eq!(
+            b128,
+            PrimeBag128::<usize>::try_from_iter([1, 2, 3]).unwrap()
+        );
     }
 }

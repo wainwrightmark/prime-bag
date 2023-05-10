@@ -106,10 +106,10 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn test_abc() {
-        for x in Helpers16::PRIMES {
-            std::println!("{x}")
-        }
-    }
+    // #[test]
+    // fn test_abc() {
+    //     for x in Helpers16::PRIMES {
+    //         std::println!("{x}")
+    //     }
+    // }
 }
