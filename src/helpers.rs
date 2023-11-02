@@ -51,7 +51,7 @@ macro_rules! helpers {
                 }
             }
 
-            pub const ONE: $nonzero_ux = unsafe { <$nonzero_ux>::new_unchecked(1) };
+            pub const ONE: $nonzero_ux = <$nonzero_ux>::MIN;
 
             pub const fn div_exact(x: $nonzero_ux, other: $nonzero_ux) -> Option<$nonzero_ux> {
                 let x: $ux = x.get();
