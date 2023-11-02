@@ -16,7 +16,7 @@ use crate::{helpers::*, iter::*};
 
 macro_rules! prime_bag {
     ($bag_x: ident, $helpers_x: ty, $nonzero_ux: ty, $ux: ty) => {
-        #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Ord, Eq)]
+        #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Ord, Eq, Hash)]
         pub struct $bag_x<E>($nonzero_ux, PhantomData<E>);
 
         assert_eq_size!($bag_x<usize>, $ux);
