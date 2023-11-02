@@ -140,22 +140,37 @@ macro_rules! prime_bag {
                 self.0.get() == <$helpers_x>::ONE.get()
             }
 
-            /// Try to create the union of this bag and `rhs`.
-            /// Does not modify the existing bags.
+            /// Try to create the sum of this bag and `rhs`.
             /// Returns `None` if the resulting bag would be too large.
-            /// The union contains each element that is present in either bag a number of times equal to the total count of that element in both bags combined.
+            /// The sum contains each element that is present in either bag a number of times equal to the total count of that element in both bags combined.
             #[must_use]
-            pub const fn try_union(&self, rhs: &Self) -> Option<Self> {
+            pub const fn try_sum(&self, rhs: &Self) -> Option<Self> {
                 match self.0.checked_mul(rhs.0) {
                     Some(b) => Some(Self(b, PhantomData)),
                     None => None,
                 }
             }
 
+            /// Try to create the union of this bag and `rhs`.
+            /// Returns `None` if the resulting bag would be too large.
+            /// The union contains each element that is present in either bag a number of times equal to the maximum count of that element in either bag.
+            #[must_use]
+            pub const fn try_union(&self, rhs: &Self) -> Option<Self> {
+                let gcd = <$helpers_x>::gcd(self.0, rhs.0);
+
+                let Some(divided) = <$helpers_x>::div_exact(self.0, gcd) else {return None}; // Note: this should never fail
+                let Some(lcm) = rhs.0.checked_mul(divided)  else {return None}; // Note LCM is a*b / gcd
+
+
+
+                Some(Self(lcm, PhantomData))
+
+
+            }
+
             /// Try to create the difference (or complement) of this bag and `rhs`.
-            /// Does not modify the existing bags.
             /// Returns `None` if this bag is not a superset of `rhs`.
-            /// The difference contains each element in the first bag a number of times equal to the number of times it appears in the first bag minus the number of times it appears in `rhs`
+            /// The difference contains each element in the first bag a number of times equal to the number of times it appears in `self` minus the number of times it appears in `rhs`
             #[must_use]
             pub const fn try_difference(&self, rhs: &Self) -> Option<Self> {
                 match <$helpers_x>::div_exact(self.0, rhs.0) {
@@ -165,7 +180,6 @@ macro_rules! prime_bag {
             }
 
             /// Create the intersection of this bag and `rhs`.
-            /// Does not modify the existing bags.
             /// The intersection contains each element which appears in both bags a number of times equal to the minimum number of times it appears in either bag.
             #[must_use]
             pub const fn intersection(&self, rhs: &Self) -> Self {
@@ -359,12 +373,25 @@ mod tests {
     }
 
     #[test]
-    pub fn test_try_union() {
+    pub fn test_try_union(){
+        let bag = PrimeBag16::<usize>::try_from_iter([1, 2, 3, 3]).unwrap();
+        let bag2 = PrimeBag16::<usize>::try_from_iter([2, 3, 4]).unwrap();
+
+        let expected_bag = PrimeBag16::<usize>::try_from_iter([1, 2, 3, 3, 4]).unwrap();
+        assert_eq!(bag.try_union(&bag2), Some(expected_bag));
+
+        let friend = PrimeBag16::<usize>::try_from_iter([5]).unwrap();
+
+        assert_eq!(expected_bag.try_union(&friend), None); //The bag created would be too big
+    }
+
+    #[test]
+    pub fn test_try_sum() {
         let bag = PrimeBag16::<usize>::try_from_iter([1, 2, 3, 3]).unwrap();
         let bag2 = PrimeBag16::<usize>::try_from_iter([2, 3]).unwrap();
         let expected_bag = PrimeBag16::<usize>::try_from_iter([1, 2, 2, 3, 3, 3]).unwrap();
-        assert_eq!(bag.try_union(&bag2), Some(expected_bag));
-        assert_eq!(expected_bag.try_union(&expected_bag), None); //The bag created would be too big
+        assert_eq!(bag.try_sum(&bag2), Some(expected_bag));
+        assert_eq!(expected_bag.try_sum(&expected_bag), None); //The bag created would be too big
     }
 
     #[test]
