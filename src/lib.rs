@@ -104,6 +104,18 @@ macro_rules! prime_bag {
                 Some(Self(b, PhantomData))
             }
 
+            /// Try to remove `value` from this bag
+            /// Returns `None` if the bag does not contain `value`
+            pub fn try_remove(&self, value: E)-> Option<Self>{
+                let u: usize = value.into();
+                let p = <$helpers_x>::get_prime(u)?;
+
+                match <$helpers_x>::div_exact(self.0, p) {
+                    Some(b) => Some(Self(b, PhantomData)),
+                    None => None,
+                }
+            }
+
             /// Try to create a new bag with the `value` inserted `n` times.
             /// Does not modify the existing bag.
             /// Returns `None` if the bag does not have enough space.
@@ -178,6 +190,8 @@ macro_rules! prime_bag {
                     None => None,
                 }
             }
+
+
 
             /// Create the intersection of this bag and `rhs`.
             /// The intersection contains each element which appears in both bags a number of times equal to the minimum number of times it appears in either bag.
@@ -336,6 +350,15 @@ mod tests {
         let expected_bag = PrimeBag16::<usize>::try_from_iter([1, 2, 2, 3, 3, 3, 0]).unwrap();
         assert_eq!(bag.try_insert(0), Some(expected_bag));
         assert_eq!(bag.try_insert(4), None);
+    }
+
+    #[test]
+    pub fn test_try_remove() {
+        let bag = PrimeBag16::<usize>::try_from_iter([1, 2, 2]).unwrap();
+        //Note: the original bag is almost full - it has space for a 0 but not a 4
+        let expected_bag = PrimeBag16::<usize>::try_from_iter([1, 2]).unwrap();
+        assert_eq!(bag.try_remove(2), Some(expected_bag));
+        assert_eq!(bag.try_remove(3), None);
     }
 
     #[test]
