@@ -1,17 +1,18 @@
 use core::{marker::PhantomData, num::*};
 
 use crate::helpers::*;
+use crate::prime_bag_element::PrimeBagElement;
 
 macro_rules! prime_bag_group_iter {
     ($iter_x: ident, $helpers_x: ty, $nonzero_ux: ty) => {
         #[derive(Debug, Clone)]
-pub struct $iter_x<E: From<usize>> {
+pub struct $iter_x<E: PrimeBagElement> {
     chunk: $nonzero_ux,
     prime_index: usize,
     phantom: PhantomData<E>,
 }
 
-impl<E: From<usize>> Iterator for $iter_x<E> {
+impl<E: PrimeBagElement> Iterator for $iter_x<E> {
     type Item = (E, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -24,7 +25,7 @@ impl<E: From<usize>> Iterator for $iter_x<E> {
 
             if let Some(new_chunk) = <$helpers_x>::div_exact(self.chunk, prime) {
                 self.chunk = new_chunk;
-                let e = E::from(self.prime_index);
+                let e = E::from_prime_index(self.prime_index);
                 self.prime_index += 1;
                 let mut count: usize = 1;
 
@@ -42,7 +43,7 @@ impl<E: From<usize>> Iterator for $iter_x<E> {
     }
 }
 
-impl<E: From<usize>> $iter_x<E> {
+impl<E: PrimeBagElement> $iter_x<E> {
     pub const fn new(chunk: $nonzero_ux) -> Self {
         Self {
             chunk,

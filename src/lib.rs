@@ -3,7 +3,7 @@
 extern crate static_assertions;
 
 pub mod iter;
-// mod nonzero_u8;
+pub mod prime_bag_element;
 pub mod group_iter;
 mod helpers;
 
@@ -12,7 +12,7 @@ use core::num::*;
 
 use group_iter::*;
 
-use crate::{helpers::*, iter::*};
+use crate::{helpers::*, iter::*, prime_bag_element::*};
 
 macro_rules! prime_bag {
     ($bag_x: ident, $helpers_x: ty, $nonzero_ux: ty, $ux: ty) => {
@@ -28,7 +28,7 @@ macro_rules! prime_bag {
             }
         }
 
-        impl<E: Into<usize>> $bag_x<E> {
+        impl<E: PrimeBagElement> $bag_x<E> {
             /// Try to extend the bag with elements from an iterator.
             /// Does not modify this bag.
             /// Returns `None` if the resulting bag would be too large
@@ -36,7 +36,7 @@ macro_rules! prime_bag {
             pub fn try_extend<T: IntoIterator<Item = E>>(&self, iter: T) -> Option<Self> {
                 let mut b = self.0;
                 for e in iter {
-                    let u: usize = e.into();
+                    let u: usize = e.into_prime_index();
                     let p = <$helpers_x>::get_prime(u)?;
                     b = b.checked_mul(p)?;
                 }
@@ -54,7 +54,7 @@ macro_rules! prime_bag {
             /// Returns the number of instances of `value` in the bag.
             #[must_use]
             pub fn count_instances(&self, value: E) -> usize {
-                let u: usize = value.into();
+                let u: usize = value.into_prime_index();
                 // todo use binary search
 
                 if let Some(p) = <$helpers_x>::get_prime(u) {
@@ -74,7 +74,7 @@ macro_rules! prime_bag {
             /// Returns whether the bag contains a particular `value`.
             #[must_use]
             pub fn contains(&self, value: E) -> bool {
-                let u: usize = value.into();
+                let u: usize = value.into_prime_index();
                 if let Some(p) = <$helpers_x>::get_prime(u) {
                     return <$helpers_x>::is_multiple(self.0, p);
                 }
@@ -84,7 +84,7 @@ macro_rules! prime_bag {
             /// Returns whether the bag contains a particular `value` at least `n` times.
             #[must_use]
             pub fn contains_at_least(&self, value: E, n: u32) -> bool {
-                let u: usize = value.into();
+                let u: usize = value.into_prime_index();
                 if let Some(p) = <$helpers_x>::get_prime(u) {
                     if let Some(b) = p.checked_pow(n) {
                         return <$helpers_x>::is_multiple(self.0, b);
@@ -98,7 +98,7 @@ macro_rules! prime_bag {
             /// Returns `None` if the bag does not have enough space.
             #[must_use]
             pub fn try_insert(&self, value: E) -> Option<Self> {
-                let u: usize = value.into();
+                let u: usize = value.into_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
                 let b = self.0.checked_mul(p)?;
                 Some(Self(b, PhantomData))
@@ -107,7 +107,7 @@ macro_rules! prime_bag {
             /// Try to remove `value` from this bag
             /// Returns `None` if the bag does not contain `value`
             pub fn try_remove(&self, value: E)-> Option<Self>{
-                let u: usize = value.into();
+                let u: usize = value.into_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
 
                 match <$helpers_x>::div_exact(self.0, p) {
@@ -121,7 +121,7 @@ macro_rules! prime_bag {
             /// Returns `None` if the bag does not have enough space.
             #[must_use]
             pub fn try_insert_many(&self, value: E, count: u32) -> Option<Self> {
-                let u: usize = value.into();
+                let u: usize = value.into_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
                 let p2 = p.checked_pow(count)?;
                 let b = self.0.checked_mul(p2)?;
@@ -212,7 +212,7 @@ prime_bag!(PrimeBag128, Helpers128, NonZeroU128, u128);
 
 macro_rules! into_iterator {
     ($bag_x: ty, $iter_x: ty) => {
-        impl<E: From<usize>> IntoIterator for $bag_x {
+        impl<E: PrimeBagElement> IntoIterator for $bag_x {
             type Item = E;
             type IntoIter = $iter_x;
 
@@ -255,7 +255,7 @@ from_bag_to_bag!(PrimeBag64<E>, PrimeBag128<E>);
 
 macro_rules! group_iterator {
     ($bag_x: ty, $iter_x: ty) => {
-        impl<E: From<usize>> $bag_x {
+        impl<E: PrimeBagElement> $bag_x {
             /// Iterate through groups of elements, each item of the iterator will be the element and its count.
             /// Elements which are not present are skipped.
             pub fn iter_groups(&self) -> impl Iterator<Item = (E, usize)> {
@@ -275,6 +275,16 @@ group_iterator!(PrimeBag128<E>, PrimeBagGroupIter128<E>);
 mod tests {
 
     use super::*;
+
+    impl PrimeBagElement for usize{
+        fn into_prime_index(&self)-> usize {
+            *self
+        }
+
+        fn from_prime_index(value: usize)-> Self {
+            value
+        }
+    }
 
     #[test]
     fn test_iter_groups() {

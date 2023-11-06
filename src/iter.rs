@@ -2,17 +2,18 @@ use core::marker::PhantomData;
 use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
 
 use crate::helpers::*;
+use crate::prime_bag_element::PrimeBagElement;
 
 macro_rules! prime_bag_iter {
     ($iter_x: ident, $helpers_x: ty, $nonzero_ux: ty) => {
         #[derive(Debug, Clone)]
-        pub struct $iter_x<E: From<usize>> {
+        pub struct $iter_x<E: PrimeBagElement> {
             chunk: $nonzero_ux,
             prime_index: usize,
             phantom: PhantomData<E>,
         }
 
-        impl<E: From<usize>> $iter_x<E> {
+        impl<E: PrimeBagElement> $iter_x<E> {
             pub const fn new(chunk: $nonzero_ux) -> Self {
                 Self {
                     chunk,
@@ -23,7 +24,7 @@ macro_rules! prime_bag_iter {
         }
 
         //TODO double ended iterator etc
-        impl<E: From<usize>> Iterator for $iter_x<E> {
+        impl<E: PrimeBagElement> Iterator for $iter_x<E> {
             type Item = E;
 
             fn next(&mut self) -> Option<Self::Item> {
@@ -35,7 +36,7 @@ macro_rules! prime_bag_iter {
                     let prime = <$helpers_x>::get_prime(self.prime_index)?;
                     if let Some(new_chunk) = <$helpers_x>::div_exact(self.chunk, prime) {
                         self.chunk = new_chunk;
-                        return Some(E::from(self.prime_index));
+                        return Some(E::from_prime_index(self.prime_index));
                     } else {
                         self.prime_index += 1;
                     }

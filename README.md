@@ -20,7 +20,7 @@ Testing for the presence of an element is achieved by modulus.
 | Contains / Superset |        Modulus         |
 |    Intersection     | Greatest Common Factor |
 
-Elements of the Bag must implement `From<usize>` and `TryInto<usize>`
+Elements of the Bag must implement `PrimeBagElement`
 
 
 ## Getting started
