@@ -29,6 +29,15 @@ macro_rules! prime_bag {
         }
 
         impl<E: PrimeBagElement> $bag_x<E> {
+
+            pub fn from_inner(inner : $nonzero_ux)-> Self{
+                Self(inner, PhantomData)
+            }
+
+            pub fn into_inner(self)-> $nonzero_ux{
+                self.0
+            }
+
             /// Try to extend the bag with elements from an iterator.
             /// Does not modify this bag.
             /// Returns `None` if the resulting bag would be too large
@@ -282,6 +291,21 @@ mod tests {
         fn from_prime_index(value: usize) -> Self {
             value
         }
+    }
+
+    #[test]
+    fn test_inner(){
+        let bag = PrimeBag8::<usize>::try_from_iter([1, 1, 2]).unwrap();
+
+        let inner = bag.into_inner();
+
+        assert_eq!(inner.get(), 45);
+
+        let bag = PrimeBag8::<usize>::from_inner(NonZeroU8::new(45).unwrap());
+
+        let v: Vec<_> = bag.iter_groups().collect();
+
+        assert_eq!(v, [(1, 2), (2, 1)])
     }
 
     #[test]
