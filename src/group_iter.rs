@@ -6,11 +6,11 @@ use crate::prime_bag_element::PrimeBagElement;
 macro_rules! prime_bag_group_iter {
     ($iter_x: ident, $helpers_x: ty, $nonzero_ux: ty) => {
         #[derive(Debug, Clone)]
-pub struct $iter_x<E: PrimeBagElement> {
-    chunk: $nonzero_ux,
-    prime_index: usize,
-    phantom: PhantomData<E>,
-}
+        pub struct $iter_x<E: PrimeBagElement> {
+            chunk: $nonzero_ux,
+            prime_index: usize,
+            phantom: PhantomData<E>,
+        }
 
 impl<E: PrimeBagElement> Iterator for $iter_x<E> {
     type Item = (E, usize);

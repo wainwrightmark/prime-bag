@@ -2,10 +2,10 @@
 #[macro_use]
 extern crate static_assertions;
 
-pub mod iter;
-pub mod prime_bag_element;
 pub mod group_iter;
 mod helpers;
+pub mod iter;
+pub mod prime_bag_element;
 
 use core::marker::PhantomData;
 use core::num::*;
@@ -106,7 +106,7 @@ macro_rules! prime_bag {
 
             /// Try to remove `value` from this bag
             /// Returns `None` if the bag does not contain `value`
-            pub fn try_remove(&self, value: E)-> Option<Self>{
+            pub fn try_remove(&self, value: E) -> Option<Self> {
                 let u: usize = value.into_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
 
@@ -170,14 +170,14 @@ macro_rules! prime_bag {
             pub const fn try_union(&self, rhs: &Self) -> Option<Self> {
                 let gcd = <$helpers_x>::gcd(self.0, rhs.0);
 
-                let Some(divided) = <$helpers_x>::div_exact(self.0, gcd) else {return None}; // Note: this should never fail
-                let Some(lcm) = rhs.0.checked_mul(divided)  else {return None}; // Note LCM is a*b / gcd
-
-
+                let Some(divided) = <$helpers_x>::div_exact(self.0, gcd) else {
+                    return None;
+                }; // Note: this should never fail
+                let Some(lcm) = rhs.0.checked_mul(divided) else {
+                    return None;
+                }; // Note LCM is a*b / gcd
 
                 Some(Self(lcm, PhantomData))
-
-
             }
 
             /// Try to create the difference (or complement) of this bag and `rhs`.
@@ -190,8 +190,6 @@ macro_rules! prime_bag {
                     None => None,
                 }
             }
-
-
 
             /// Create the intersection of this bag and `rhs`.
             /// The intersection contains each element which appears in both bags a number of times equal to the minimum number of times it appears in either bag.
@@ -276,23 +274,57 @@ mod tests {
 
     use super::*;
 
-    impl PrimeBagElement for usize{
-        fn into_prime_index(&self)-> usize {
+    impl PrimeBagElement for usize {
+        fn into_prime_index(&self) -> usize {
             *self
         }
 
-        fn from_prime_index(value: usize)-> Self {
+        fn from_prime_index(value: usize) -> Self {
             value
         }
     }
 
     #[test]
-    fn test_iter_groups() {
-        let bag = PrimeBag32::<usize>::try_from_iter([1,1,1, 3, 3, 4,4,4]).unwrap();
+    fn test_iter_groups_8() {
+        let bag = PrimeBag8::<usize>::try_from_iter([1, 1, 2]).unwrap();
         let v: Vec<_> = bag.iter_groups().collect();
 
-        assert_eq!(v, [(1, 3), (3,2), (4, 3)])
+        assert_eq!(v, [(1, 2), (2, 1)])
     }
+
+    #[test]
+    fn test_iter_groups_16() {
+        let bag = PrimeBag16::<usize>::try_from_iter([1, 1, 2]).unwrap();
+        let v: Vec<_> = bag.iter_groups().collect();
+
+        assert_eq!(v, [(1, 2), (2, 1)])
+    }
+
+    #[test]
+    fn test_iter_groups_32() {
+        let bag = PrimeBag32::<usize>::try_from_iter([1, 1, 1, 3, 3, 4, 4, 4]).unwrap();
+        let v: Vec<_> = bag.iter_groups().collect();
+
+        assert_eq!(v, [(1, 3), (3, 2), (4, 3)])
+    }
+
+    #[test]
+    fn test_iter_groups_64() {
+        let bag = PrimeBag64::<usize>::try_from_iter([1, 1, 1, 3, 3, 4, 4, 4]).unwrap();
+        let v: Vec<_> = bag.iter_groups().collect();
+
+        assert_eq!(v, [(1, 3), (3, 2), (4, 3)])
+    }
+
+    #[test]
+    fn test_iter_groups_128() {
+        let bag = PrimeBag128::<usize>::try_from_iter([1, 1, 1, 3, 3, 4, 4, 4]).unwrap();
+        let v: Vec<_> = bag.iter_groups().collect();
+
+        assert_eq!(v, [(1, 3), (3, 2), (4, 3)])
+    }
+
+
 
     #[test]
     fn test_from_bag_to_bag() {
@@ -406,7 +438,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_try_union(){
+    pub fn test_try_union() {
         let bag = PrimeBag16::<usize>::try_from_iter([1, 2, 3, 3]).unwrap();
         let bag2 = PrimeBag16::<usize>::try_from_iter([2, 3, 4]).unwrap();
 
