@@ -28,8 +28,26 @@ Elements of the Bag must implement `PrimeBagElement`
 ```rust
 use prime_bag::*;
 
+#[derive(Debug)]
+pub struct MyElement(usize);
+
+impl PrimeBagElement for MyElement {
+    fn into_prime_index(&self) -> usize {
+        self.0
+    }
+
+    fn from_prime_index(value: usize) -> Self {
+        Self(value)
+    }
+}
+
 fn main() {
-    let bag = PrimeBag16::<usize>::try_from_iter([1, 2, 2]).unwrap();
-    let bag2 = bag.try_extend([3, 3, 3]).unwrap();
+    let bag = PrimeBag16::<MyElement>::try_from_iter([MyElement(1), MyElement(2), MyElement(2)]).unwrap();
+    let bag2 = bag.try_extend([MyElement(3), MyElement(3), MyElement(3)]).unwrap();
+
+    let items : Vec<(MyElement, core::num::NonZeroUsize)> = bag2.iter_groups().collect();
+    let inner_items: Vec<(usize, usize)> = items.into_iter().map(|(element, count)|(element.0, count.get())).collect();
+
+    assert_eq!(inner_items, vec![(1,1), (2,2), (3,3)])
 }
 ```

@@ -2,10 +2,11 @@ use core::marker::PhantomData;
 use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
 
 use crate::helpers::*;
-use crate::prime_bag_element::PrimeBagElement;
+use crate::PrimeBagElement;
 
 macro_rules! prime_bag_iter {
     ($iter_x: ident, $helpers_x: ty, $nonzero_ux: ty) => {
+        /// Iterate through elements of a prime bag
         #[derive(Debug, Clone)]
         pub struct $iter_x<E: PrimeBagElement> {
             chunk: $nonzero_ux,
@@ -14,7 +15,7 @@ macro_rules! prime_bag_iter {
         }
 
         impl<E: PrimeBagElement> $iter_x<E> {
-            pub const fn new(chunk: $nonzero_ux) -> Self {
+            pub (crate) const fn new(chunk: $nonzero_ux) -> Self {
                 Self {
                     chunk,
                     prime_index: 0,

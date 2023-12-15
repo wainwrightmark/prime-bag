@@ -1,7 +1,7 @@
 use std::num::*;
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use prime_bag::prime_bag_element::*;
+
 use prime_bag::*;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -40,11 +40,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let u64_bags: [PrimeBag64<MyElement>; COUNT] = u64_arr.map(|x| PrimeBag64::from_inner(x));
     let u128_bags: [PrimeBag128<MyElement>; COUNT] = u128_arr.map(|x| PrimeBag128::from_inner(x));
 
-    c.bench_function("count_2_3s u8", |b| b.iter(  || count_2_3s_u8(&u8_bags)));
-    c.bench_function("count_2_3s u16", |b| b.iter( || count_2_3s_u16(&u16_bags)));
-    c.bench_function("count_2_3s u32", |b| b.iter( || count_2_3s_u32(&u32_bags)));
-    c.bench_function("count_2_3s u64", |b| b.iter( || count_2_3s_u64(&u64_bags)));
-    c.bench_function("count_2_3s u128", |b| b.iter(|| count_2_3s_u128(&u128_bags)));
+    c.bench_function("count_2_3s u8", |b| b.iter(|| count_2_3s_u8(&u8_bags)));
+    c.bench_function("count_2_3s u16", |b| b.iter(|| count_2_3s_u16(&u16_bags)));
+    c.bench_function("count_2_3s u32", |b| b.iter(|| count_2_3s_u32(&u32_bags)));
+    c.bench_function("count_2_3s u64", |b| b.iter(|| count_2_3s_u64(&u64_bags)));
+    c.bench_function("count_2_3s u128", |b| {
+        b.iter(|| count_2_3s_u128(&u128_bags))
+    });
 
     c.bench_function("Intersect u8", |b| b.iter(|| intersect_all_u8(&u8_bags)));
     c.bench_function("Intersect u16", |b| b.iter(|| intersect_all_u16(&u16_bags)));
@@ -59,8 +61,6 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Union u32", |b| b.iter(|| union_all_u32(&u32_bags)));
     c.bench_function("Union u64", |b| b.iter(|| union_all_u64(&u64_bags)));
     c.bench_function("Union u128", |b| b.iter(|| union_all_u128(&u128_bags)));
-
-
 }
 
 macro_rules! intersect_all {

@@ -1,10 +1,11 @@
 use core::{marker::PhantomData, num::*};
 
 use crate::helpers::*;
-use crate::prime_bag_element::PrimeBagElement;
+use crate::PrimeBagElement;
 
 macro_rules! prime_bag_group_iter {
     ($iter_x: ident, $helpers_x: ty, $nonzero_ux: ty) => {
+        /// Iterates through groups of elements in the bag
         #[derive(Debug, Clone)]
         pub struct $iter_x<E: PrimeBagElement> {
             chunk: $nonzero_ux,
@@ -13,7 +14,7 @@ macro_rules! prime_bag_group_iter {
         }
 
 impl<E: PrimeBagElement> Iterator for $iter_x<E> {
-    type Item = (E, usize);
+    type Item = (E, core::num::NonZeroUsize);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.chunk == <$helpers_x>::ONE {
@@ -27,11 +28,11 @@ impl<E: PrimeBagElement> Iterator for $iter_x<E> {
                 self.chunk = new_chunk;
                 let e = E::from_prime_index(self.prime_index);
                 self.prime_index += 1;
-                let mut count: usize = 1;
+                let mut count: NonZeroUsize = NonZeroUsize::MIN;
 
                 while let Some(new_chunk) = <$helpers_x>::div_exact(self.chunk, prime) {
                     self.chunk = new_chunk;
-                    count += 1;
+                    count = count.saturating_add(1);
                 }
 
                 return Some((e, count));
@@ -44,7 +45,7 @@ impl<E: PrimeBagElement> Iterator for $iter_x<E> {
 }
 
 impl<E: PrimeBagElement> $iter_x<E> {
-    pub const fn new(chunk: $nonzero_ux) -> Self {
+    pub (crate) const fn new(chunk: $nonzero_ux) -> Self {
         Self {
             chunk,
             prime_index: 0,

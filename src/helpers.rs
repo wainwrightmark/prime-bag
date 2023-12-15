@@ -6,16 +6,16 @@ macro_rules! helpers {
 
         impl $helpers_x {
             const PRIMES: [$nonzero_ux; Self::NUM_PRIMES] = {
-                let mut current: $ux = 2;
-                let mut arr: [$ux; Self::NUM_PRIMES] = [1; Self::NUM_PRIMES];
+                let mut current: $nonzero_ux = <$nonzero_ux>::MIN.saturating_add(1);
+                let mut arr: [$nonzero_ux; Self::NUM_PRIMES] = [<$nonzero_ux>::MIN; Self::NUM_PRIMES];
                 let mut index: usize = 0;
 
                 while index < arr.len() {
                     let mut sieve_index = 0;
                     let mut factor_found = false;
                     while sieve_index < index {
-                        let factor: $ux = arr[sieve_index];
-                        if current.rem_euclid(factor) == 0 {
+                        let factor: $nonzero_ux = arr[sieve_index];
+                        if current.get().rem_euclid(factor.get()) == 0 {
                             factor_found = true;
                             break;
                         }
@@ -25,15 +25,14 @@ macro_rules! helpers {
                         arr[index] = current;
                         index += 1;
                     }
-                    current += 1;
+                    current = current.saturating_add(1);
                 }
 
                 let mut arr1 = [Self::ONE; Self::NUM_PRIMES];
                 let mut index: usize = 0;
                 while index < arr.len() {
                     let u = arr[index];
-                    let nz = unsafe { <$nonzero_ux>::new_unchecked(u) };
-                    arr1[index] = nz;
+                    arr1[index] = u;
                     index += 1;
                 }
 

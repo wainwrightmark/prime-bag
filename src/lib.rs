@@ -1,21 +1,102 @@
 #![cfg_attr(not(any(test, feature = "std")), no_std)]
+#![doc(html_root_url = "https://docs.rs/prime_bag/0.2.0")]
+#![deny(missing_docs)]
+#![deny(unsafe_code)]
+#![allow(warnings, dead_code, unused_imports, unused_mut)]
+#![warn(clippy::pedantic)]
+
+//! # prime bag
+//! ![GITHUB](https://img.shields.io/github/last-commit/wainwrightmark/prime_bag)
+//!
+//! A bag datatype that used unsigned integers for storage.
+//! This works by assigning each possible item a prime number.
+//! The contents of the bag is represented by the product of those prime numbers.
+//! This works best if the set of possible items is constrained and some items are much more common than others.
+//! To maximize the possible size of the bag, assign lower prime numbers to more common items.
+//!
+//! Using prime bags, certain operations can be done very efficiently:
+//! Adding an element or combining two bags is achieved by multiplication.
+//! Removing an element or bag of elements is achieved by division.
+//! Testing for the presence of an element is achieved by modulus.
+//!
+//! |    Set Operation    |     Math Operation     |
+//! | :-----------------: | :--------------------: |
+//! |   Insert / Extend   |     Multiplication     |
+//! |       Remove        |        Division        |
+//! | Contains / Superset |        Modulus         |
+//! |    Intersection     | Greatest Common Factor |
+//!
+//! Elements of the Bag must implement `PrimeBagElement`
+//! Currently only 128 different element values are supported, but if necessary I could increase this
+//!
+//!
+//! ## Getting started
+//!
+//! ```rust
+//! use prime_bag::*;
+//!
+//! #[derive(Debug)]
+//! pub struct MyElement(usize);
+//!
+//! impl PrimeBagElement for MyElement {
+//!     fn into_prime_index(&self) -> usize {
+//!         self.0
+//!     }
+//!
+//!     fn from_prime_index(value: usize) -> Self {
+//!         Self(value)
+//!     }
+//! }
+//!
+//! fn main() {
+//!     let bag = PrimeBag16::<MyElement>::try_from_iter([MyElement(1), MyElement(2), MyElement(2)]).unwrap();
+//!     let bag2 = bag.try_extend([MyElement(3), MyElement(3), MyElement(3)]).unwrap();
+//!
+//!     let items : Vec<(MyElement, core::num::NonZeroUsize)> = bag2.iter_groups().collect();
+//!     let inner_items: Vec<(usize, usize)> = items.into_iter().map(|(element, count)|(element.0, count.get())).collect();
+//!
+//!     assert_eq!(inner_items, vec![(1,1), (2,2), (3,3)])
+//! }
+//! ```
+
 #[macro_use]
 extern crate static_assertions;
 
-pub mod group_iter;
 mod helpers;
+/// Iterator of elements
 pub mod iter;
-pub mod prime_bag_element;
+/// Iterator of groups of elements
+pub mod group_iter;
 
 use core::marker::PhantomData;
 use core::num::*;
-
 use group_iter::*;
 
-use crate::{helpers::*, iter::*, prime_bag_element::*};
+use crate::{helpers::*, iter::*};
+
+/// Indicates a type that can be put into a Prime Bag
+/// To implement correctly, every possible value of this type must map to a unique number
+/// And that number must map back to that element.
+/// To maximize possible bag size and performance, use the lowest numbers possible and assign lower numbers to more common elements.
+/// The element which maps to `0` will be able to use compiler intrinsics for some operations, particularly `count_instances` making them much faster
+pub trait PrimeBagElement{
+    /// The index of this element.
+    /// This should be a different value for each element
+    /// Only values in the range `0..=127` are valid.
+    /// Please contact me if you need larger values and I will add a feature for them.
+    fn into_prime_index(&self)-> usize;
+
+    /// Creates an element from a prime index.
+    /// If you are using this crate as intended, this will only be called on values produced by `into_prime_index`
+    /// But it is possible to get a different value (e.g. by deserialization) so you must also handle this case
+    fn from_prime_index(value: usize)-> Self;
+}
 
 macro_rules! prime_bag {
     ($bag_x: ident, $helpers_x: ty, $nonzero_ux: ty, $ux: ty) => {
+        /// Represents a bag (multi-set) of elements
+        /// The bag will have a maximum capacity
+        /// Use larger sized bags (e.g. `PrimeBag64``, `PrimeBag128`)
         #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Ord, Eq, Hash)]
         pub struct $bag_x<E>($nonzero_ux, PhantomData<E>);
 
@@ -30,10 +111,14 @@ macro_rules! prime_bag {
 
         impl<E: PrimeBagElement> $bag_x<E> {
 
+            /// Create a bag from the inner value
+            /// This can be used to convert a bag from one type to another or to enable serialization
             pub fn from_inner(inner : $nonzero_ux)-> Self{
                 Self(inner, PhantomData)
             }
 
+            /// Convert the bag to the inner value
+            /// This can be used to convert a bag from one type to another or to enable serialization
             pub fn into_inner(self)-> $nonzero_ux{
                 self.0
             }
@@ -267,7 +352,7 @@ macro_rules! group_iterator {
         impl<E: PrimeBagElement> $bag_x {
             /// Iterate through groups of elements, each item of the iterator will be the element and its count.
             /// Elements which are not present are skipped.
-            pub fn iter_groups(&self) -> impl Iterator<Item = (E, usize)> {
+            pub fn iter_groups(&self) -> impl Iterator<Item = (E, NonZeroUsize)> {
                 <$iter_x>::new(self.0)
             }
         }
@@ -307,7 +392,7 @@ mod tests {
 
         let v: Vec<_> = bag.iter_groups().collect();
 
-        assert_eq!(v, [(1, 2), (2, 1)])
+        assert_eq!(v, [(1, NonZeroUsize::new(2).unwrap()), (2, NonZeroUsize::new(1).unwrap())])
     }
 
     #[test]
@@ -315,7 +400,7 @@ mod tests {
         let bag = PrimeBag8::<usize>::try_from_iter([1, 1, 2]).unwrap();
         let v: Vec<_> = bag.iter_groups().collect();
 
-        assert_eq!(v, [(1, 2), (2, 1)])
+        assert_eq!(v, [(1, NonZeroUsize::new(2).unwrap()), (2, NonZeroUsize::new(1).unwrap())])
     }
 
     #[test]
@@ -323,7 +408,7 @@ mod tests {
         let bag = PrimeBag16::<usize>::try_from_iter([1, 1, 2]).unwrap();
         let v: Vec<_> = bag.iter_groups().collect();
 
-        assert_eq!(v, [(1, 2), (2, 1)])
+        assert_eq!(v, [(1, NonZeroUsize::new(2).unwrap()), (2, NonZeroUsize::new(1).unwrap())])
     }
 
     #[test]
@@ -331,7 +416,7 @@ mod tests {
         let bag = PrimeBag32::<usize>::try_from_iter([1, 1, 1, 3, 3, 4, 4, 4]).unwrap();
         let v: Vec<_> = bag.iter_groups().collect();
 
-        assert_eq!(v, [(1, 3), (3, 2), (4, 3)])
+        assert_eq!(v, [(1, NonZeroUsize::new(3).unwrap()), (3, NonZeroUsize::new(2).unwrap()), (4, NonZeroUsize::new(3).unwrap())])
     }
 
     #[test]
@@ -339,7 +424,7 @@ mod tests {
         let bag = PrimeBag64::<usize>::try_from_iter([1, 1, 1, 3, 3, 4, 4, 4]).unwrap();
         let v: Vec<_> = bag.iter_groups().collect();
 
-        assert_eq!(v, [(1, 3), (3, 2), (4, 3)])
+        assert_eq!(v, [(1, NonZeroUsize::new(3).unwrap()), (3, NonZeroUsize::new(2).unwrap()), (4, NonZeroUsize::new(3).unwrap())])
     }
 
     #[test]
@@ -347,7 +432,7 @@ mod tests {
         let bag = PrimeBag128::<usize>::try_from_iter([1, 1, 1, 3, 3, 4, 4, 4]).unwrap();
         let v: Vec<_> = bag.iter_groups().collect();
 
-        assert_eq!(v, [(1, 3), (3, 2), (4, 3)])
+        assert_eq!(v, [(1, NonZeroUsize::new(3).unwrap()), (3, NonZeroUsize::new(2).unwrap()), (4, NonZeroUsize::new(3).unwrap())])
     }
 
 

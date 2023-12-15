@@ -12,7 +12,13 @@ Possible header types:
 
 [crates.io]: https://crates.io/crates/prime_bag
 
-## v0.1.0 (2022-11-15)
+## v0.2 (2023-12-15)
+
+- Added additional metadata to Cargo.toml
+- Removed unsafe code
+- Wrote more documentation
+
+## v0.1.0 (2023-12-15)
 
 - Initial Release on [crates.io] :tada:
 
