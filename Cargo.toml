@@ -2,6 +2,17 @@
 name = "prime_bag"
 version = "0.1.0"
 edition = "2021"
+authors = ["Mark Wainwright <wainwrightml@gmail.com>"]
+description = "A bag datatype that used unsigned integers for storage."
+documentation = "https://docs.rs/prime_bag"
+repository = "https://github.com/wainwrightmark/prime-bag"
+readme = "README.md"
+keywords = ["bag", "no_std"]
+categories = [
+]
+license = "MIT"
+exclude = [
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,6 +23,7 @@ static_assertions = "1.1.0"
 [dev-dependencies]
 criterion = "0.5"
 rand = "0.8"
+version-sync = "0.9"
 
 [[bench]]
 name = "my_benchmark"
