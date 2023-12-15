@@ -78,6 +78,19 @@ macro_rules! helpers {
             pub(crate) const fn gcd(lhs: $nonzero_ux, rhs: $nonzero_ux) -> $nonzero_ux {
                 $gcd_func(lhs, rhs)
             }
+
+            pub(crate) const fn lcm(lhs: $nonzero_ux, rhs: $nonzero_ux) -> Option<$nonzero_ux> {
+                let gcd = Self::gcd(lhs, rhs);
+
+                let Some(divided) = Self::div_exact(lhs, gcd) else {
+                    return None;
+                };
+                let Some(lcm) = rhs.checked_mul(divided) else {
+                    return None;
+                };// Note LCM is a*b / gcd
+
+                Some(lcm)
+            }
         }
     };
 }

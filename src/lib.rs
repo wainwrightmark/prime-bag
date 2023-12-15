@@ -177,14 +177,9 @@ macro_rules! prime_bag {
             /// The union contains each element that is present in either bag a number of times equal to the maximum count of that element in either bag.
             #[must_use]
             pub const fn try_union(&self, rhs: &Self) -> Option<Self> {
-                let gcd = <$helpers_x>::gcd(self.0, rhs.0);
-
-                let Some(divided) = <$helpers_x>::div_exact(self.0, gcd) else {
+                let Some(lcm) = <$helpers_x>::lcm(self.0, rhs.0) else {
                     return None;
-                }; // Note: this should never fail
-                let Some(lcm) = rhs.0.checked_mul(divided) else {
-                    return None;
-                }; // Note LCM is a*b / gcd
+                };
 
                 Some(Self(lcm, PhantomData))
             }
