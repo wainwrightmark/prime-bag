@@ -66,7 +66,14 @@ macro_rules! prime_bag {
                 let u: usize = value.into_prime_index();
                 // todo use binary search
 
+                if u == 0{
+                    return self.0.trailing_zeros() as usize;
+                }
+
                 if let Some(p) = <$helpers_x>::get_prime(u) {
+
+
+
                     let mut n: usize = 0;
                     let mut b = self.0;
 
@@ -386,6 +393,12 @@ mod tests {
         assert_eq!(bag.count_instances(2), 2);
         assert_eq!(bag.count_instances(3), 3);
         assert_eq!(bag.count_instances(1000), 0);
+    }
+
+     #[test]
+    fn test_count_instances_of_zero() {
+        let bag = PrimeBag16::<usize>::try_from_iter([0,0,0, 1, 2, 3]).unwrap();
+        assert_eq!(bag.count_instances(0), 3);
     }
 
     #[test]
