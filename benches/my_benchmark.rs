@@ -45,6 +45,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Intersect u128", |b| b.iter(|| intersect_all_u128(&u128_bags)));
 }
 
+#[no_coverage]
 fn intersect_all_u8<T: PrimeBagElement>(bags: &[PrimeBag8<T>])-> u8{
     let mut total = 0u8;
     for x in 0..(bags.len() -1){
@@ -58,6 +59,7 @@ fn intersect_all_u8<T: PrimeBagElement>(bags: &[PrimeBag8<T>])-> u8{
     total
 }
 
+#[no_coverage]
 fn intersect_all_u16<T: PrimeBagElement>(bags: &[PrimeBag16<T>])-> u16{
     let mut total = 0u16;
     for x in 0..(bags.len() -1){
@@ -71,6 +73,7 @@ fn intersect_all_u16<T: PrimeBagElement>(bags: &[PrimeBag16<T>])-> u16{
     total
 }
 
+#[no_coverage]
 fn intersect_all_u32<T: PrimeBagElement>(bags: &[PrimeBag32<T>])-> u32{
     let mut total = 0u32;
     for x in 0..(bags.len() -1){
@@ -84,7 +87,7 @@ fn intersect_all_u32<T: PrimeBagElement>(bags: &[PrimeBag32<T>])-> u32{
     total
 }
 
-
+#[no_coverage]
 fn intersect_all_u64<T: PrimeBagElement>(bags: &[PrimeBag64<T>])-> u64{
     let mut total = 0u64;
     for x in 0..(bags.len() -1){
@@ -98,6 +101,7 @@ fn intersect_all_u64<T: PrimeBagElement>(bags: &[PrimeBag64<T>])-> u64{
     total
 }
 
+#[no_coverage]
 fn intersect_all_u128<T: PrimeBagElement>(bags: &[PrimeBag128<T>])-> u128{
     let mut total = 0u128;
     for x in 0..(bags.len() -1){
