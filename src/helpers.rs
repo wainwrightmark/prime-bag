@@ -82,6 +82,7 @@ macro_rules! helpers {
     };
 }
 
+// todo I believe the euclid algorithm is faster than the binary for u8/u16/u32 but slower otherwise
 helpers!(Helpers8, NonZeroU8, u8, 54, gcd::binary_nonzero_u8);
 helpers!(Helpers16, NonZeroU16, u16, 128, gcd::binary_nonzero_u16);
 helpers!(Helpers32, NonZeroU32, u32, 128, gcd::binary_nonzero_u32);

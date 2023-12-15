@@ -43,77 +43,66 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Intersect u32", |b| b.iter(|| intersect_all_u32(&u32_bags)));
     c.bench_function("Intersect u64", |b| b.iter(|| intersect_all_u64(&u64_bags)));
     c.bench_function("Intersect u128", |b| b.iter(|| intersect_all_u128(&u128_bags)));
+
+
+
+    c.bench_function("Union u8", |b| b.iter(|| union_all_u8(&u8_bags)));
+    c.bench_function("Union u16", |b| b.iter(|| union_all_u16(&u16_bags)));
+    c.bench_function("Union u32", |b| b.iter(|| union_all_u32(&u32_bags)));
+    c.bench_function("Union u64", |b| b.iter(|| union_all_u64(&u64_bags)));
+    c.bench_function("Union u128", |b| b.iter(|| union_all_u128(&u128_bags)));
 }
 
-#[no_coverage]
-fn intersect_all_u8<T: PrimeBagElement>(bags: &[PrimeBag8<T>])-> u8{
-    let mut total = 0u8;
-    for x in 0..(bags.len() -1){
-        let left =  &bags[x];
-        let right = &bags[x + 1];
 
-        let intersection = left.intersection(right);
-        let inner = intersection.into_inner().get();
-        total =  total.wrapping_add(inner);
-    }
-    total
+macro_rules! intersect_all {
+    ($name: ident, $bag: ty, $inner: ty ) => {
+
+        fn $name<T: PrimeBagElement>(bags: &[$bag])-> $inner{
+            let mut total: $inner = 0;
+            for x in 0..(bags.len() -1){
+                let left =  &bags[x];
+                let right = &bags[x + 1];
+
+                let intersection = left.intersection(right);
+                let inner = intersection.into_inner().get();
+                total =  total.wrapping_add(inner);
+            }
+            total
+        }
+    };
 }
 
-#[no_coverage]
-fn intersect_all_u16<T: PrimeBagElement>(bags: &[PrimeBag16<T>])-> u16{
-    let mut total = 0u16;
-    for x in 0..(bags.len() -1){
-        let left =  &bags[x];
-        let right = &bags[x + 1];
+macro_rules! union_all {
+    ($name: ident, $bag: ty, $inner: ty ) => {
 
-        let intersection = left.intersection(right);
-        let inner = intersection.into_inner().get();
-        total =  total.wrapping_add(inner);
-    }
-    total
+        fn $name<T: PrimeBagElement>(bags: &[$bag])-> $inner{
+            let mut total: $inner = 0;
+            for x in 0..(bags.len() -1){
+                let left =  &bags[x];
+                let right = &bags[x + 1];
+
+                let union1 = left.try_union(right).unwrap_or_default();
+                let inner = union1.into_inner().get();
+                total =  total.wrapping_add(inner);
+            }
+            total
+        }
+    };
 }
 
-#[no_coverage]
-fn intersect_all_u32<T: PrimeBagElement>(bags: &[PrimeBag32<T>])-> u32{
-    let mut total = 0u32;
-    for x in 0..(bags.len() -1){
-        let left =  &bags[x];
-        let right = &bags[x + 1];
+intersect_all!(intersect_all_u8, PrimeBag8<T>, u8);
+intersect_all!(intersect_all_u16, PrimeBag16<T>, u16);
+intersect_all!(intersect_all_u32, PrimeBag32<T>, u32);
+intersect_all!(intersect_all_u64, PrimeBag64<T>, u64);
+intersect_all!(intersect_all_u128, PrimeBag128<T>, u128);
 
-        let intersection = left.intersection(right);
-        let inner = intersection.into_inner().get();
-        total =  total.wrapping_add(inner);
-    }
-    total
-}
+union_all!(union_all_u8, PrimeBag8<T>, u8);
+union_all!(union_all_u16, PrimeBag16<T>, u16);
+union_all!(union_all_u32, PrimeBag32<T>, u32);
+union_all!(union_all_u64, PrimeBag64<T>, u64);
+union_all!(union_all_u128, PrimeBag128<T>, u128);
 
-#[no_coverage]
-fn intersect_all_u64<T: PrimeBagElement>(bags: &[PrimeBag64<T>])-> u64{
-    let mut total = 0u64;
-    for x in 0..(bags.len() -1){
-        let left =  &bags[x];
-        let right = &bags[x + 1];
 
-        let intersection = left.intersection(right);
-        let inner = intersection.into_inner().get();
-        total =  total.wrapping_add(inner);
-    }
-    total
-}
-
-#[no_coverage]
-fn intersect_all_u128<T: PrimeBagElement>(bags: &[PrimeBag128<T>])-> u128{
-    let mut total = 0u128;
-    for x in 0..(bags.len() -1){
-        let left =  &bags[x];
-        let right = &bags[x + 1];
-
-        let intersection = left.intersection(right);
-        let inner = intersection.into_inner().get();
-        total =  total.wrapping_add(inner);
-    }
-    total
-}
 
 pub struct MyElement(usize);
 
