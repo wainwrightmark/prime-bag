@@ -22,6 +22,7 @@ impl<E: PrimeBagElement> Iterator for $iter_x<E> {
         }
 
         loop {
+            //if prime_index == 0, use trailing_zeros
             let prime = <$helpers_x>::get_prime(self.prime_index)?;
 
             if let Some(new_chunk) = <$helpers_x>::div_exact(self.chunk, prime) {

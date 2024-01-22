@@ -41,6 +41,7 @@ macro_rules! helpers {
 
             pub const NUM_PRIMES: usize = $num_primes;
 
+            #[inline]
             pub const fn get_prime(i: usize) -> Option<$nonzero_ux> {
                 if i < Self::PRIMES.len() {
                     let p = Self::PRIMES[i];
@@ -52,6 +53,7 @@ macro_rules! helpers {
 
             pub const ONE: $nonzero_ux = <$nonzero_ux>::MIN;
 
+            #[inline]
             pub const fn div_exact(x: $nonzero_ux, other: $nonzero_ux) -> Option<$nonzero_ux> {
                 let x: $ux = x.get();
                 let other = other.get();
@@ -66,6 +68,7 @@ macro_rules! helpers {
                 }
             }
 
+            #[inline]
             pub(crate) const fn is_multiple(x: $nonzero_ux, other: $nonzero_ux) -> bool {
                 let x: $ux = x.get();
                 let other: $ux = other.get();
@@ -74,10 +77,12 @@ macro_rules! helpers {
                 rem == 0
             }
 
+            #[inline]
             pub(crate) const fn gcd(lhs: $nonzero_ux, rhs: $nonzero_ux) -> $nonzero_ux {
                 $gcd_func(lhs, rhs)
             }
 
+            #[inline]
             pub(crate) const fn lcm(lhs: $nonzero_ux, rhs: $nonzero_ux) -> Option<$nonzero_ux> {
                 let gcd = Self::gcd(lhs, rhs);
 

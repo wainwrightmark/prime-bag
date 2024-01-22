@@ -104,6 +104,7 @@ macro_rules! prime_bag {
         assert_eq_size!(Option<$bag_x<usize>>, $ux);
 
         impl<E> Default for $bag_x<E> {
+            #[inline]
             fn default() -> Self {
                 Self(<$helpers_x>::ONE, PhantomData)
             }
@@ -113,12 +114,14 @@ macro_rules! prime_bag {
 
             /// Create a bag from the inner value
             /// This can be used to convert a bag from one type to another or to enable serialization
+            #[inline]
             pub fn from_inner(inner : $nonzero_ux)-> Self{
                 Self(inner, PhantomData)
             }
 
             /// Convert the bag to the inner value
             /// This can be used to convert a bag from one type to another or to enable serialization
+            #[inline]
             pub fn into_inner(self)-> $nonzero_ux{
                 self.0
             }
@@ -127,6 +130,7 @@ macro_rules! prime_bag {
             /// Does not modify this bag.
             /// Returns `None` if the resulting bag would be too large
             #[must_use]
+            #[inline]
             pub fn try_extend<T: IntoIterator<Item = E>>(&self, iter: T) -> Option<Self> {
                 let mut b = self.0;
                 for e in iter {
@@ -141,12 +145,14 @@ macro_rules! prime_bag {
             /// Tries to create a bag from an iterator of values.
             /// Returns `None` if the resulting bag would be too large.
             #[must_use]
+            #[inline]
             pub fn try_from_iter<T: IntoIterator<Item = E>>(iter: T) -> Option<Self> {
                 Self::default().try_extend(iter)
             }
 
             /// Returns the number of instances of `value` in the bag.
             #[must_use]
+            #[inline]
             pub fn count_instances(&self, value: E) -> usize {
                 let u: usize = value.into_prime_index();
                 // todo use binary search
@@ -174,6 +180,7 @@ macro_rules! prime_bag {
 
             /// Returns whether the bag contains a particular `value`.
             #[must_use]
+            #[inline]
             pub fn contains(&self, value: E) -> bool {
                 let u: usize = value.into_prime_index();
                 if let Some(p) = <$helpers_x>::get_prime(u) {
@@ -184,6 +191,7 @@ macro_rules! prime_bag {
 
             /// Returns whether the bag contains a particular `value` at least `n` times.
             #[must_use]
+            #[inline]
             pub fn contains_at_least(&self, value: E, n: u32) -> bool {
                 let u: usize = value.into_prime_index();
                 if let Some(p) = <$helpers_x>::get_prime(u) {
@@ -198,6 +206,7 @@ macro_rules! prime_bag {
             /// Does not modify the existing bag.
             /// Returns `None` if the bag does not have enough space.
             #[must_use]
+            #[inline]
             pub fn try_insert(&self, value: E) -> Option<Self> {
                 let u: usize = value.into_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
@@ -207,6 +216,7 @@ macro_rules! prime_bag {
 
             /// Try to remove `value` from this bag
             /// Returns `None` if the bag does not contain `value`
+            #[inline]
             pub fn try_remove(&self, value: E) -> Option<Self> {
                 let u: usize = value.into_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
@@ -221,6 +231,7 @@ macro_rules! prime_bag {
             /// Does not modify the existing bag.
             /// Returns `None` if the bag does not have enough space.
             #[must_use]
+            #[inline]
             pub fn try_insert_many(&self, value: E, count: u32) -> Option<Self> {
                 let u: usize = value.into_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
@@ -235,6 +246,7 @@ macro_rules! prime_bag {
             /// This is true if every element in the `rhs` bag is contained at least as many times in this.
             /// Note that this will also return true if the two bags are equal.
             #[must_use]
+            #[inline]
             pub const fn is_superset(&self, rhs: &Self) -> bool {
                 <$helpers_x>::is_multiple(self.0, rhs.0)
             }
@@ -243,12 +255,14 @@ macro_rules! prime_bag {
             /// This is true if every element in this bag is contained at least as many times in `rhs`.
             /// Note that this will also return true if the two bags are equal.
             #[must_use]
+            #[inline]
             pub const fn is_subset(&self, rhs: &Self) -> bool {
                 rhs.is_superset(self)
             }
 
             /// Returns whether the bag contains zero elements.
             #[must_use]
+            #[inline]
             pub const fn is_empty(&self) -> bool {
                 self.0.get() == <$helpers_x>::ONE.get()
             }
@@ -257,6 +271,7 @@ macro_rules! prime_bag {
             /// Returns `None` if the resulting bag would be too large.
             /// The sum contains each element that is present in either bag a number of times equal to the total count of that element in both bags combined.
             #[must_use]
+            #[inline]
             pub const fn try_sum(&self, rhs: &Self) -> Option<Self> {
                 match self.0.checked_mul(rhs.0) {
                     Some(b) => Some(Self(b, PhantomData)),
@@ -268,6 +283,7 @@ macro_rules! prime_bag {
             /// Returns `None` if the resulting bag would be too large.
             /// The union contains each element that is present in either bag a number of times equal to the maximum count of that element in either bag.
             #[must_use]
+            #[inline]
             pub const fn try_union(&self, rhs: &Self) -> Option<Self> {
                 let Some(lcm) = <$helpers_x>::lcm(self.0, rhs.0) else {
                     return None;
@@ -280,6 +296,7 @@ macro_rules! prime_bag {
             /// Returns `None` if this bag is not a superset of `rhs`.
             /// The difference contains each element in the first bag a number of times equal to the number of times it appears in `self` minus the number of times it appears in `rhs`
             #[must_use]
+            #[inline]
             pub const fn try_difference(&self, rhs: &Self) -> Option<Self> {
                 match <$helpers_x>::div_exact(self.0, rhs.0) {
                     Some(b) => Some(Self(b, PhantomData)),
@@ -290,6 +307,7 @@ macro_rules! prime_bag {
             /// Create the intersection of this bag and `rhs`.
             /// The intersection contains each element which appears in both bags a number of times equal to the minimum number of times it appears in either bag.
             #[must_use]
+            #[inline]
             pub const fn intersection(&self, rhs: &Self) -> Self {
                 let gcd = <$helpers_x>::gcd(self.0, rhs.0);
                 Self(gcd, PhantomData)
@@ -310,6 +328,7 @@ macro_rules! into_iterator {
             type Item = E;
             type IntoIter = $iter_x;
 
+            #[inline]
             fn into_iter(self) -> Self::IntoIter {
                 Self::IntoIter::new(self.0)
             }
@@ -326,6 +345,7 @@ into_iterator!(PrimeBag128<E>, PrimeBagIter128<E>);
 macro_rules! from_bag_to_bag {
     ($t_from: ty, $t_into: ty) => {
         impl<E> From<$t_from> for $t_into {
+            #[inline]
             fn from(value: $t_from) -> Self {
                 Self(value.0.into(), PhantomData)
             }
@@ -352,6 +372,7 @@ macro_rules! group_iterator {
         impl<E: PrimeBagElement> $bag_x {
             /// Iterate through groups of elements, each item of the iterator will be the element and its count.
             /// Elements which are not present are skipped.
+            #[inline]
             pub fn iter_groups(&self) -> impl Iterator<Item = (E, NonZeroUsize)> {
                 <$iter_x>::new(self.0)
             }

@@ -28,6 +28,7 @@ macro_rules! prime_bag_iter {
         impl<E: PrimeBagElement> Iterator for $iter_x<E> {
             type Item = E;
 
+            #[inline]
             fn next(&mut self) -> Option<Self::Item> {
                 if self.chunk == <$helpers_x>::ONE {
                     return None;
