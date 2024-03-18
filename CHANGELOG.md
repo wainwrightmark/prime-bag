@@ -9,8 +9,11 @@ Possible header types:
 - `Bug Fixes` for any bug fixes.
 - `Breaking Changes` for any backwards-incompatible changes.
 
-
 [crates.io]: https://crates.io/crates/prime_bag
+
+## v0.3 (2023-03-18)
+
+- Performance improvements
 
 ## v0.2 (2023-12-15)
 

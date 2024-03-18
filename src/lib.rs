@@ -613,4 +613,20 @@ mod tests {
         assert_eq!(bag1.try_difference(&bag2), Some(expected_bag));
         assert_eq!(bag2.try_difference(&bag1), None); //bag2 is not a superset of bag1
     }
+
+    #[test]
+    pub fn test_iter_size_hint(){
+
+        let mut bag =  PrimeBag16::<usize>::default();
+
+        assert_eq!((0, Some(0)), bag.into_iter().size_hint());
+
+        for (to_add, min, max) in [(0,1,1),(0,2,2), (1,3,3), (1,3,4), (2,3,5), (4,3,7)]{
+            bag = bag.try_insert(to_add).unwrap();
+
+            assert_eq!((min, Some(max)), bag.into_iter().size_hint());
+        }
+    }
 }
+
+

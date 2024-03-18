@@ -15,7 +15,7 @@ macro_rules! prime_bag_iter {
         }
 
         impl<E: PrimeBagElement> $iter_x<E> {
-            pub (crate) const fn new(chunk: $nonzero_ux) -> Self {
+            pub(crate) const fn new(chunk: $nonzero_ux) -> Self {
                 Self {
                     chunk,
                     prime_index: 0,
@@ -23,6 +23,8 @@ macro_rules! prime_bag_iter {
                 }
             }
         }
+
+        impl<E: PrimeBagElement> core::iter::FusedIterator for $iter_x<E> {}
 
         //TODO double ended iterator etc
         impl<E: PrimeBagElement> Iterator for $iter_x<E> {
@@ -44,6 +46,46 @@ macro_rules! prime_bag_iter {
                     }
                 }
             }
+
+            #[inline]
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                let (twos, chunk, prime_index ) = if self.prime_index == 0{
+                    let tz = self.chunk.get().trailing_zeros();
+
+                    let new_chunk = self.chunk.get() >> tz;
+                    if let Ok(new_chunk ) = <$nonzero_ux>::try_from(new_chunk){
+                        (tz as usize,new_chunk,  1usize)
+                    }
+                    else{
+                        return(tz as usize, Some(tz as usize))
+                    }
+
+                }else{
+                    (0usize, self.chunk, self.prime_index)
+                };
+
+                if chunk.get() == 1{
+                    return (twos, Some(twos));
+                }
+
+                let Some(prime) = <$helpers_x>::get_prime(prime_index)else{
+                    return (twos, None);
+                };
+
+                let log = chunk.get().ilog(prime.get()) as usize;
+
+                (twos + 1, Some(twos + log))
+            }
+
+            //Don't implement min and max as we do not know the ordering of the prime bag elements
+
+            //todo last
+
+            //todo count
+
+            //todo nth
+
+            //todo fold
         }
     };
 }
