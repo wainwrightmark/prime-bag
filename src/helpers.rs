@@ -116,25 +116,56 @@ macro_rules! helpers {
     };
 }
 
+
+
 // todo I believe the euclid algorithm is faster than the binary for u8/u16/u32 but slower otherwise
+
+
+#[cfg(not(feature="primes256"))]
+helpers!(Helpers8, NonZeroU8, u8, 32, gcd::binary_nonzero_u8);
+#[cfg(not(feature="primes256"))]
+helpers!(Helpers16, NonZeroU16, u16, 32, gcd::binary_nonzero_u16);
+#[cfg(not(feature="primes256"))]
+helpers!(Helpers32, NonZeroU32, u32, 32, gcd::binary_nonzero_u32);
+#[cfg(not(feature="primes256"))]
+helpers!(Helpers64, NonZeroU64, u64, 32, gcd::binary_nonzero_u64);
+#[cfg(not(feature="primes256"))]
+helpers!(Helpers128, NonZeroU128, u128, 32, gcd::binary_nonzero_u128);
+
+#[cfg(feature="primes256")]
 helpers!(Helpers8, NonZeroU8, u8, 54, gcd::binary_nonzero_u8);
-helpers!(Helpers16, NonZeroU16, u16, 128, gcd::binary_nonzero_u16);
-helpers!(Helpers32, NonZeroU32, u32, 128, gcd::binary_nonzero_u32);
-helpers!(Helpers64, NonZeroU64, u64, 128, gcd::binary_nonzero_u64);
-helpers!(Helpers128, NonZeroU128, u128, 128, gcd::binary_nonzero_u128);
+#[cfg(feature="primes256")]
+helpers!(Helpers16, NonZeroU16, u16, 256, gcd::binary_nonzero_u16);
+#[cfg(feature="primes256")]
+helpers!(Helpers32, NonZeroU32, u32, 256, gcd::binary_nonzero_u32);
+#[cfg(feature="primes256")]
+helpers!(Helpers64, NonZeroU64, u64, 256, gcd::binary_nonzero_u64);
+#[cfg(feature="primes256")]
+helpers!(Helpers128, NonZeroU128, u128, 256, gcd::binary_nonzero_u128);
 
 const_assert_eq!(Helpers8::PRIMES[0].get(), 2u8);
 const_assert_eq!(Helpers8::PRIMES[1].get(), 3u8);
+const_assert_eq!(Helpers8::PRIMES[31].get(), 131u8);
+#[cfg(feature="primes256")]
 const_assert_eq!(Helpers8::PRIMES[53].get(), 251u8);
 
 const_assert_eq!(Helpers16::PRIMES[0].get(), 2u16);
 const_assert_eq!(Helpers16::PRIMES[1].get(), 3u16);
-const_assert_eq!(Helpers16::PRIMES[127].get(), 719u16);
+const_assert_eq!(Helpers16::PRIMES[31].get(), 131u16);
+#[cfg(feature="primes256")]
+const_assert_eq!(Helpers16::PRIMES[255].get(), 1619u16);
 
-const_assert_eq!(Helpers16::PRIMES[127].get(), 719u16);
-const_assert_eq!(Helpers32::PRIMES[127].get(), 719u32);
-const_assert_eq!(Helpers64::PRIMES[127].get(), 719u64);
-const_assert_eq!(Helpers128::PRIMES[127].get(), 719u128);
+const_assert_eq!(Helpers32::PRIMES[31].get(), 131u32);
+#[cfg(feature="primes256")]
+const_assert_eq!(Helpers32::PRIMES[255].get(), 1619u32);
+
+const_assert_eq!(Helpers64::PRIMES[31].get(), 131u64);
+#[cfg(feature="primes256")]
+const_assert_eq!(Helpers64::PRIMES[255].get(), 1619u64);
+
+const_assert_eq!(Helpers128::PRIMES[31].get(), 131u128);
+#[cfg(feature="primes256")]
+const_assert_eq!(Helpers128::PRIMES[255].get(), 1619u128);
 
 #[cfg(test)]
 mod tests {

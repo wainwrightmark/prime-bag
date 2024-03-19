@@ -11,8 +11,9 @@ Possible header types:
 
 [crates.io]: https://crates.io/crates/prime_bag
 
-## v0.3 (2023-03-18)
+## v0.3 (2023-03-19)
 
+- `Breaking Changes` - the default number of primes is now 32. This can be increased to 256 with the `primes256` feature
 - Performance improvements
 
 ## v0.2 (2023-12-15)

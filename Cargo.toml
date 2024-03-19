@@ -33,3 +33,7 @@ harness = false
 [[bench]]
 name = "iai_benchmark"
 harness = false
+
+
+[features]
+primes256 = []
