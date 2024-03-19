@@ -99,7 +99,7 @@ macro_rules! prime_bag_iter {
                     self.prime_index = 1;
                 }
 
-                while let Some(n) = self.next(){
+                while let Some(n) = self.next() {
                     count += 1;
                 }
 
@@ -107,20 +107,22 @@ macro_rules! prime_bag_iter {
             }
 
             fn nth(&mut self, mut n: usize) -> Option<Self::Item> {
-                if self.prime_index == 0{
+                if self.prime_index == 0 {
                     let tz = self.chunk.trailing_zeros();
 
-                    match n.checked_sub(tz as usize){
+                    match n.checked_sub(tz as usize) {
                         Some(new_n) => {
                             n = new_n;
-                            self.chunk = <$nonzero_ux>::new(self.chunk.get() >> tz).unwrap_or(<$nonzero_ux>::MIN);
+                            self.chunk = <$nonzero_ux>::new(self.chunk.get() >> tz)
+                                .unwrap_or(<$nonzero_ux>::MIN);
                             self.prime_index = 1;
-                        },
+                        }
                         None => {
-                            self.chunk = <$nonzero_ux>::new(self.chunk.get() >> (n as u32 + 1)).unwrap_or(<$nonzero_ux>::MIN);
+                            self.chunk = <$nonzero_ux>::new(self.chunk.get() >> (n as u32 + 1))
+                                .unwrap_or(<$nonzero_ux>::MIN);
 
                             return Some(E::from_prime_index(0));
-                        },
+                        }
                     }
                 }
 
@@ -160,19 +162,14 @@ macro_rules! prime_bag_iter {
                     (self.prime_index, self.chunk)
                 };
 
-                let mut prime_index = match <$helpers_x>::PRIMES[start_index..]
-                    .binary_search(&chunk)
-                {
-                    Ok(offset) => {
-                        let index = offset + start_index;
-
-                        let prime = <$helpers_x>::get_prime(index).unwrap_or(<$nonzero_ux>::MIN);
-                        self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / prime)
+                let mut prime_index = match <$helpers_x>::find_largest_possible_prime(start_index, chunk) {
+                    Ok(index) => {
+                        self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / chunk)
                             .unwrap_or(<$nonzero_ux>::MIN);
 
                         return Some(Self::Item::from_prime_index(index));
                     }
-                    Err(offset_after) => offset_after + start_index,
+                    Err(index) => index,
                 };
 
                 loop {

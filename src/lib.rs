@@ -666,6 +666,14 @@ mod tests {
             assert_eq!(e, a);
         }
     }
+
+    #[test]
+    pub fn test_iter_last(){
+        let expected: Vec<usize> = vec![0,0,0,1,1,2,2,3,3,5,7,13,19];
+        let bag =  PrimeBag128::<usize>::try_from_iter(expected.clone()).unwrap();
+
+        assert_eq!(expected.last().cloned(), bag.into_iter().last());
+    }
 }
 
 

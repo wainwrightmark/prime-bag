@@ -5,9 +5,10 @@ macro_rules! helpers {
         pub(crate) struct $helpers_x;
 
         impl $helpers_x {
-            pub (crate) const PRIMES: [$nonzero_ux; Self::NUM_PRIMES] = {
+            pub(crate) const PRIMES: [$nonzero_ux; Self::NUM_PRIMES] = {
                 let mut current: $nonzero_ux = <$nonzero_ux>::MIN.saturating_add(1);
-                let mut arr: [$nonzero_ux; Self::NUM_PRIMES] = [<$nonzero_ux>::MIN; Self::NUM_PRIMES];
+                let mut arr: [$nonzero_ux; Self::NUM_PRIMES] =
+                    [<$nonzero_ux>::MIN; Self::NUM_PRIMES];
                 let mut index: usize = 0;
 
                 while index < arr.len() {
@@ -91,9 +92,25 @@ macro_rules! helpers {
                 };
                 let Some(lcm) = rhs.checked_mul(divided) else {
                     return None;
-                };// Note LCM is a*b / gcd
+                }; // Note LCM is a*b / gcd
 
                 Some(lcm)
+            }
+
+            /// Search for the largest prime greater than or equal to number, skipping the first `skip` primes
+            /// Returns `Ok(index)` if the number is prime, where `index` is the index of that prime
+            /// Returns `Err(index)` if the number is not prime, where `index` is the index of the next prime after `number`
+            #[inline]
+            pub(crate) fn find_largest_possible_prime(
+                skip: usize,
+                number: $nonzero_ux,
+            ) -> Result<usize, usize> {
+                match Self::PRIMES[skip..].binary_search(&number) {
+                    Ok(offset) => {
+                        Ok(offset + skip)
+                    }
+                    Err(offset) => Err(offset + skip),
+                }
             }
         }
     };
