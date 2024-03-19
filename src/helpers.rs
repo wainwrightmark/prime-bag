@@ -5,7 +5,7 @@ macro_rules! helpers {
         pub(crate) struct $helpers_x;
 
         impl $helpers_x {
-            const PRIMES: [$nonzero_ux; Self::NUM_PRIMES] = {
+            pub (crate) const PRIMES: [$nonzero_ux; Self::NUM_PRIMES] = {
                 let mut current: $nonzero_ux = <$nonzero_ux>::MIN.saturating_add(1);
                 let mut arr: [$nonzero_ux; Self::NUM_PRIMES] = [<$nonzero_ux>::MIN; Self::NUM_PRIMES];
                 let mut index: usize = 0;

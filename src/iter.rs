@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
 
-use crate::helpers::*;
+use crate::helpers::{self, *};
 use crate::PrimeBagElement;
 
 macro_rules! prime_bag_iter {
@@ -24,9 +24,6 @@ macro_rules! prime_bag_iter {
             }
         }
 
-        impl<E: PrimeBagElement> core::iter::FusedIterator for $iter_x<E> {}
-
-        //TODO double ended iterator etc
         impl<E: PrimeBagElement> Iterator for $iter_x<E> {
             type Item = E;
 
@@ -49,26 +46,24 @@ macro_rules! prime_bag_iter {
 
             #[inline]
             fn size_hint(&self) -> (usize, Option<usize>) {
-                let (twos, chunk, prime_index ) = if self.prime_index == 0{
+                let (twos, chunk, prime_index) = if self.prime_index == 0 {
                     let tz = self.chunk.get().trailing_zeros();
 
                     let new_chunk = self.chunk.get() >> tz;
-                    if let Ok(new_chunk ) = <$nonzero_ux>::try_from(new_chunk){
-                        (tz as usize,new_chunk,  1usize)
+                    if let Ok(new_chunk) = <$nonzero_ux>::try_from(new_chunk) {
+                        (tz as usize, new_chunk, 1usize)
+                    } else {
+                        return (tz as usize, Some(tz as usize));
                     }
-                    else{
-                        return(tz as usize, Some(tz as usize))
-                    }
-
-                }else{
+                } else {
                     (0usize, self.chunk, self.prime_index)
                 };
 
-                if chunk.get() == 1{
+                if chunk.get() == 1 {
                     return (twos, Some(twos));
                 }
 
-                let Some(prime) = <$helpers_x>::get_prime(prime_index)else{
+                let Some(prime) = <$helpers_x>::get_prime(prime_index) else {
                     return (twos, None);
                 };
 
@@ -79,13 +74,112 @@ macro_rules! prime_bag_iter {
 
             //Don't implement min and max as we do not know the ordering of the prime bag elements
 
-            //todo last
+            #[inline]
+            fn last(mut self) -> Option<Self::Item>
+            where
+                Self: Sized,
+            {
+                DoubleEndedIterator::next_back(&mut self)
+            }
 
-            //todo count
+            fn count(self) -> usize
+            where
+                Self: Sized,
+            {
+                let mut count = 0usize;
+
+                let mut chunk = self.chunk;
+                let mut prime_index = self.prime_index;
+
+                if prime_index == 0 {
+                    let tz = chunk.trailing_zeros();
+                    let Ok(new_chunk) = <$nonzero_ux>::try_from(chunk.get() >> tz) else {
+                        return count;
+                    };
+
+                    chunk = new_chunk;
+                    count += tz as usize;
+                    prime_index = 1;
+                }
+
+                while chunk > <$nonzero_ux>::MIN {
+                    let Some(prime) = <$helpers_x>::get_prime(prime_index) else {
+                        return count;
+                    };
+
+                    while chunk.get() % prime.get() == 0 {
+                        let Ok(new_chunk) = <$nonzero_ux>::try_from(chunk.get() / prime.get())
+                        else {
+                            return count;
+                        };
+
+                        chunk = new_chunk;
+                        count += 1;
+                    }
+                    prime_index += 1;
+                }
+
+                count
+            }
 
             //todo nth
 
             //todo fold
+        }
+
+        impl<E: PrimeBagElement> core::iter::FusedIterator for $iter_x<E> {}
+
+        impl<E: PrimeBagElement> DoubleEndedIterator for $iter_x<E> {
+            //todo rfold, nth_back
+
+            /// Note the performance of this is not great if called repeatedly - we have to do a bitshift and a binary search every time
+            fn next_back(&mut self) -> Option<Self::Item> {
+                if self.chunk == <$nonzero_ux>::MIN {
+                    return None;
+                }
+
+                let (start_index, chunk) = if self.prime_index == 0 {
+                    let chunk = self.chunk.get() >> self.chunk.trailing_zeros();
+
+                    let chunk = <$nonzero_ux>::try_from(chunk).unwrap_or(<$nonzero_ux>::MIN);
+
+                    if chunk == <$nonzero_ux>::MIN {
+                        self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / 2)
+                            .unwrap_or(<$nonzero_ux>::MIN);
+                        return Some(Self::Item::from_prime_index(0));
+                    } else {
+                        (1, chunk)
+                    }
+                } else {
+                    (self.prime_index, self.chunk)
+                };
+
+                let mut prime_index = match <$helpers_x>::PRIMES[start_index..]
+                    .binary_search(&chunk)
+                {
+                    Ok(offset) => {
+                        let index = offset + start_index;
+
+                        let prime = <$helpers_x>::get_prime(index).unwrap_or(<$nonzero_ux>::MIN);
+                        self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / prime)
+                            .unwrap_or(<$nonzero_ux>::MIN);
+
+                        return Some(Self::Item::from_prime_index(index));
+                    }
+                    Err(offset_after) => offset_after + start_index,
+                };
+
+                loop {
+                    prime_index = prime_index.checked_sub(1)?;
+                    let prime = <$helpers_x>::get_prime(prime_index)?;
+
+                    if chunk.get() % prime == 0 {
+                        self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / prime)
+                            .unwrap_or(<$nonzero_ux>::MIN);
+                        return Some(Self::Item::from_prime_index(prime_index));
+                    }
+                }
+            }
         }
     };
 }
@@ -95,3 +189,17 @@ prime_bag_iter!(PrimeBagIter16, Helpers16, NonZeroU16);
 prime_bag_iter!(PrimeBagIter32, Helpers32, NonZeroU32);
 prime_bag_iter!(PrimeBagIter64, Helpers64, NonZeroU64);
 prime_bag_iter!(PrimeBagIter128, Helpers128, NonZeroU128);
+
+// impl<E: PrimeBagElement> Iterator for PrimeBagIter128<E> {
+//     type Item = E;
+
+//     #[inline]
+//     fn next(&mut self) -> Option<Self::Item> {
+//         panic!()
+//     }
+
+
+//     //todo nth
+
+//     //todo fold
+// }

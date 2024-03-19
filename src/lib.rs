@@ -620,12 +620,32 @@ mod tests {
         let mut bag =  PrimeBag16::<usize>::default();
 
         assert_eq!((0, Some(0)), bag.into_iter().size_hint());
+        let mut expected_count = 0;
+        assert_eq!(expected_count, bag.into_iter().count());
 
         for (to_add, min, max) in [(0,1,1),(0,2,2), (1,3,3), (1,3,4), (2,3,5), (4,3,7)]{
             bag = bag.try_insert(to_add).unwrap();
 
             assert_eq!((min, Some(max)), bag.into_iter().size_hint());
+
+            expected_count += 1;
+            assert_eq!(expected_count, bag.into_iter().count());
         }
+    }
+
+    #[test]
+    pub fn test_iter_reverse(){
+        let expected: Vec<usize> = vec![0,0,0,1,1,2,2,3,3,5,7,13,19];
+        let bag =  PrimeBag128::<usize>::try_from_iter(expected.clone()).unwrap();
+
+
+        let mut actual: Vec<usize> = bag.into_iter().rev().collect();
+        actual.reverse();
+
+        assert_eq!(expected, actual);
+
+
+
     }
 }
 
