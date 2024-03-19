@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
 
-use crate::helpers::{self, *};
+use crate::helpers::*;
 use crate::PrimeBagElement;
 
 macro_rules! prime_bag_iter {
@@ -99,7 +99,7 @@ macro_rules! prime_bag_iter {
                     self.prime_index = 1;
                 }
 
-                while let Some(n) = self.next() {
+                while let Some(_) = self.next() {
                     count += 1;
                 }
 
@@ -162,15 +162,16 @@ macro_rules! prime_bag_iter {
                     (self.prime_index, self.chunk)
                 };
 
-                let mut prime_index = match <$helpers_x>::find_largest_possible_prime(start_index, chunk) {
-                    Ok(index) => {
-                        self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / chunk)
-                            .unwrap_or(<$nonzero_ux>::MIN);
+                let mut prime_index =
+                    match <$helpers_x>::find_largest_possible_prime(start_index, chunk) {
+                        Ok(index) => {
+                            self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / chunk)
+                                .unwrap_or(<$nonzero_ux>::MIN);
 
-                        return Some(Self::Item::from_prime_index(index));
-                    }
-                    Err(index) => index,
-                };
+                            return Some(Self::Item::from_prime_index(index));
+                        }
+                        Err(index) => index,
+                    };
 
                 loop {
                     prime_index = prime_index.checked_sub(1)?;

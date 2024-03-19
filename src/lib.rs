@@ -1,8 +1,8 @@
 #![cfg_attr(not(any(test, feature = "std")), no_std)]
-#![doc(html_root_url = "https://docs.rs/prime_bag/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/prime_bag/0.3.0")]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
-#![allow(warnings, dead_code, unused_imports, unused_mut)]
+#![deny(warnings, dead_code, unused_imports, unused_mut)]
 #![warn(clippy::pedantic)]
 
 //! # prime bag
