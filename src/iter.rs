@@ -82,49 +82,55 @@ macro_rules! prime_bag_iter {
                 DoubleEndedIterator::next_back(&mut self)
             }
 
-            fn count(self) -> usize
+            fn count(mut self) -> usize
             where
                 Self: Sized,
             {
                 let mut count = 0usize;
 
-                let mut chunk = self.chunk;
-                let mut prime_index = self.prime_index;
-
-                if prime_index == 0 {
-                    let tz = chunk.trailing_zeros();
-                    let Ok(new_chunk) = <$nonzero_ux>::try_from(chunk.get() >> tz) else {
+                if self.prime_index == 0 {
+                    let tz = self.chunk.trailing_zeros();
+                    let Ok(new_chunk) = <$nonzero_ux>::try_from(self.chunk.get() >> tz) else {
                         return count;
                     };
 
-                    chunk = new_chunk;
+                    self.chunk = new_chunk;
                     count += tz as usize;
-                    prime_index = 1;
+                    self.prime_index = 1;
                 }
 
-                while chunk > <$nonzero_ux>::MIN {
-                    let Some(prime) = <$helpers_x>::get_prime(prime_index) else {
-                        return count;
-                    };
-
-                    while chunk.get() % prime.get() == 0 {
-                        let Ok(new_chunk) = <$nonzero_ux>::try_from(chunk.get() / prime.get())
-                        else {
-                            return count;
-                        };
-
-                        chunk = new_chunk;
-                        count += 1;
-                    }
-                    prime_index += 1;
+                while let Some(n) = self.next(){
+                    count += 1;
                 }
 
                 count
             }
 
-            //todo nth
+            fn nth(&mut self, mut n: usize) -> Option<Self::Item> {
+                if self.prime_index == 0{
+                    let tz = self.chunk.trailing_zeros();
 
-            //todo fold
+                    match n.checked_sub(tz as usize){
+                        Some(new_n) => {
+                            n = new_n;
+                            self.chunk = <$nonzero_ux>::new(self.chunk.get() >> tz).unwrap_or(<$nonzero_ux>::MIN);
+                            self.prime_index = 1;
+                        },
+                        None => {
+                            self.chunk = <$nonzero_ux>::new(self.chunk.get() >> (n as u32 + 1)).unwrap_or(<$nonzero_ux>::MIN);
+
+                            return Some(E::from_prime_index(0));
+                        },
+                    }
+                }
+
+                while n > 0 {
+                    let _ = self.next()?;
+                    n -= 1;
+                }
+
+                self.next()
+            }
         }
 
         impl<E: PrimeBagElement> core::iter::FusedIterator for $iter_x<E> {}
@@ -189,17 +195,3 @@ prime_bag_iter!(PrimeBagIter16, Helpers16, NonZeroU16);
 prime_bag_iter!(PrimeBagIter32, Helpers32, NonZeroU32);
 prime_bag_iter!(PrimeBagIter64, Helpers64, NonZeroU64);
 prime_bag_iter!(PrimeBagIter128, Helpers128, NonZeroU128);
-
-// impl<E: PrimeBagElement> Iterator for PrimeBagIter128<E> {
-//     type Item = E;
-
-//     #[inline]
-//     fn next(&mut self) -> Option<Self::Item> {
-//         panic!()
-//     }
-
-
-//     //todo nth
-
-//     //todo fold
-// }

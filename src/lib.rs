@@ -631,6 +631,15 @@ mod tests {
             expected_count += 1;
             assert_eq!(expected_count, bag.into_iter().count());
         }
+
+        let mut iter = bag.into_iter();
+
+
+
+        for ec in (0..=expected_count).rev(){
+            assert_eq!(ec, iter.clone().count());
+            iter.next();
+        }
     }
 
     #[test]
@@ -643,9 +652,19 @@ mod tests {
         actual.reverse();
 
         assert_eq!(expected, actual);
+    }
 
+    #[test]
+    pub fn test_iter_nth(){
+        let expected: Vec<usize> = vec![0,0,0,1,1,2,2,3,3,5,7,13,19];
+        let bag =  PrimeBag128::<usize>::try_from_iter(expected.clone()).unwrap();
 
+        for n in 0..=expected.len(){
+            let e = expected.iter().nth(n).cloned();
+            let a = bag.into_iter().nth(n);
 
+            assert_eq!(e, a);
+        }
     }
 }
 
