@@ -34,11 +34,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         *x = rng.gen();
     }
 
-    let u8_bags: [PrimeBag8<MyElement>; COUNT] = u8_arr.map(|x| PrimeBag8::from_inner(x));
-    let u16_bags: [PrimeBag16<MyElement>; COUNT] = u16_arr.map(|x| PrimeBag16::from_inner(x));
-    let u32_bags: [PrimeBag32<MyElement>; COUNT] = u32_arr.map(|x| PrimeBag32::from_inner(x));
-    let u64_bags: [PrimeBag64<MyElement>; COUNT] = u64_arr.map(|x| PrimeBag64::from_inner(x));
-    let u128_bags: [PrimeBag128<MyElement>; COUNT] = u128_arr.map(|x| PrimeBag128::from_inner(x));
+    let u8_bags: [PrimeBag8<MyElement>; COUNT] = u8_arr.map(PrimeBag8::from_inner);
+    let u16_bags: [PrimeBag16<MyElement>; COUNT] = u16_arr.map(PrimeBag16::from_inner);
+    let u32_bags: [PrimeBag32<MyElement>; COUNT] = u32_arr.map(PrimeBag32::from_inner);
+    let u64_bags: [PrimeBag64<MyElement>; COUNT] = u64_arr.map(PrimeBag64::from_inner);
+    let u128_bags: [PrimeBag128<MyElement>; COUNT] = u128_arr.map(PrimeBag128::from_inner);
 
     c.bench_function("count_2_3s u8", |b| b.iter(|| count_2_3s_u8(&u8_bags)));
     c.bench_function("count_2_3s u16", |b| b.iter(|| count_2_3s_u16(&u16_bags)));

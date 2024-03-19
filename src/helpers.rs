@@ -1,4 +1,4 @@
-use core::num::*;
+use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
 
 macro_rules! helpers {
     ($helpers_x: ident, $nonzero_ux: ty, $ux: ty, $num_primes: expr, $gcd_func: expr) => {
@@ -64,9 +64,8 @@ macro_rules! helpers {
 
                 if rem == 0 {
                     return <$nonzero_ux>::new(quo); //quo must be non zero here because math
-                } else {
-                    return None;
                 }
+                None
             }
 
             #[inline]

@@ -1,6 +1,6 @@
-use core::{marker::PhantomData, num::*};
+use core::{marker::PhantomData, num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize}};
 
-use crate::helpers::*;
+use crate::helpers::{Helpers128, Helpers16, Helpers32, Helpers64, Helpers8};
 use crate::PrimeBagElement;
 
 macro_rules! prime_bag_group_iter {
@@ -38,9 +38,7 @@ impl<E: PrimeBagElement> Iterator for $iter_x<E> {
 
                 return Some((e, count));
             }
-            else{
-                self.prime_index += 1;
-            }
+            self.prime_index += 1;
         }
     }
 }

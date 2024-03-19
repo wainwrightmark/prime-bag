@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8};
 
-use crate::helpers::*;
+use crate::helpers::{Helpers128, Helpers16, Helpers32, Helpers64, Helpers8};
 use crate::PrimeBagElement;
 
 macro_rules! prime_bag_iter {
@@ -38,9 +38,8 @@ macro_rules! prime_bag_iter {
                     if let Some(new_chunk) = <$helpers_x>::div_exact(self.chunk, prime) {
                         self.chunk = new_chunk;
                         return Some(E::from_prime_index(self.prime_index));
-                    } else {
-                        self.prime_index += 1;
                     }
+                    self.prime_index += 1;
                 }
             }
 
@@ -155,9 +154,8 @@ macro_rules! prime_bag_iter {
                         self.chunk = <$nonzero_ux>::try_from(self.chunk.get() / 2)
                             .unwrap_or(<$nonzero_ux>::MIN);
                         return Some(Self::Item::from_prime_index(0));
-                    } else {
-                        (1, chunk)
                     }
+                    (1, chunk)
                 } else {
                     (self.prime_index, self.chunk)
                 };
