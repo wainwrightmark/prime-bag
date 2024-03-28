@@ -91,19 +91,18 @@ macro_rules! count_2_3s {
         }
     };
 }
-#[library_benchmark]
-fn count_is_at_least() -> usize {
-    let mut t = 0usize;
-    let bag =
-        PrimeBag64::<MyElement>::try_from_iter([0, 0, 0, 1, 1, 8].map(|x| MyElement(x))).unwrap();
 
-    loop {
-        if !black_box(bag).is_count_at_least(black_box(t)) {
-            return t;
-        } else {
-            t += 1;
-        }
-    }
+fn get_bag_for_count() -> PrimeBag64<MyElement> {
+    PrimeBag64::<MyElement>::try_from_iter([0, 0, 0, 1, 1, 8].map(|x| MyElement(x))).unwrap()
+}
+
+#[library_benchmark]
+#[bench::g0(get_bag_for_count(), 0)]
+#[bench::g3(get_bag_for_count(), 3)]
+#[bench::g6(get_bag_for_count(), 6)]
+#[bench::g7(get_bag_for_count(), 7)]
+fn is_count_at_least(bag: PrimeBag64<MyElement>, count: usize) -> bool {
+    black_box(bag).is_count_at_least(black_box(count))
 }
 
 get_random_bags!(get_bags_u8, NonZeroU8, PrimeBag8<MyElement>);
@@ -137,7 +136,7 @@ count_2_3s!(count_2_3s_u128, get_bags_u128, PrimeBag128<MyElement>, u128);
 
 library_benchmark_group!(
     name = counts;
-    benchmarks = count_is_at_least, count_2_3s_u8, count_2_3s_u16, count_2_3s_u32, count_2_3s_u64, count_2_3s_u128
+    benchmarks = is_count_at_least, count_2_3s_u8, count_2_3s_u16, count_2_3s_u32, count_2_3s_u64, count_2_3s_u128
 );
 
 library_benchmark_group!(
