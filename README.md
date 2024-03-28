@@ -31,7 +31,7 @@ use prime_bag::*;
 pub struct MyElement(usize);
 
 impl PrimeBagElement for MyElement {
-    fn into_prime_index(&self) -> usize {
+    fn to_prime_index(&self) -> usize {
         self.0
     }
 

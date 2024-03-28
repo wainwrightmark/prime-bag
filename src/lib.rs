@@ -39,7 +39,7 @@
 //! pub struct MyElement(usize);
 //!
 //! impl PrimeBagElement for MyElement {
-//!     fn into_prime_index(&self) -> usize {
+//!     fn to_prime_index(&self) -> usize {
 //!         self.0
 //!     }
 //!
@@ -83,16 +83,15 @@ use crate::{
 /// And that number must map back to that element.
 /// To maximize possible bag size and performance, use the lowest numbers possible and assign lower numbers to more common elements.
 /// The element which maps to `0` will be able to use compiler intrinsics for some operations, particularly `count_instances` making them much faster
-pub trait PrimeBagElement {
-    #[allow(clippy::wrong_self_convention)]
+pub trait PrimeBagElement {    
     /// The index of this element.
     /// This should be a different value for each element
     /// Only values in the range `0..32` are valid unless the `primes256` feature is specified, in which case the range in `0..256`
     /// Please contact me if you need larger values and I will add a feature for them.
-    fn into_prime_index(&self) -> usize;
+    fn to_prime_index(&self) -> usize;
 
     /// Creates an element from a prime index.
-    /// If you are using this crate as intended, this will only be called on values produced by `into_prime_index`
+    /// If you are using this crate as intended, this will only be called on values produced by `to_prime_index`
     /// But it is possible to get a different value (e.g. by deserialization) so you must also handle this case
     fn from_prime_index(value: usize) -> Self;
 }
@@ -126,7 +125,7 @@ macro_rules! prime_bag {
             pub fn try_extend<T: IntoIterator<Item = E>>(&self, iter: T) -> Option<Self> {
                 let mut b = self.0;
                 for e in iter {
-                    let u: usize = e.into_prime_index();
+                    let u: usize = e.to_prime_index();
                     let p = <$helpers_x>::get_prime(u)?;
                     b = b.checked_mul(p)?;
                 }
@@ -146,7 +145,7 @@ macro_rules! prime_bag {
             #[must_use]
             #[inline]
             pub fn count_instances(&self, value: E) -> usize {
-                let u: usize = value.into_prime_index();
+                let u: usize = value.to_prime_index();
                 // todo use binary search
 
                 if u == 0 {
@@ -171,7 +170,7 @@ macro_rules! prime_bag {
             #[must_use]
             #[inline]
             pub fn contains(&self, value: E) -> bool {
-                let u: usize = value.into_prime_index();
+                let u: usize = value.to_prime_index();
                 if let Some(p) = <$helpers_x>::get_prime(u) {
                     return <$helpers_x>::is_multiple(self.0, p);
                 }
@@ -182,7 +181,7 @@ macro_rules! prime_bag {
             #[must_use]
             #[inline]
             pub fn contains_at_least(&self, value: E, n: u32) -> bool {
-                let u: usize = value.into_prime_index();
+                let u: usize = value.to_prime_index();
                 if let Some(p) = <$helpers_x>::get_prime(u) {
                     if let Some(b) = p.checked_pow(n) {
                         return <$helpers_x>::is_multiple(self.0, b);
@@ -197,7 +196,7 @@ macro_rules! prime_bag {
             #[must_use]
             #[inline]
             pub fn try_insert(&self, value: E) -> Option<Self> {
-                let u: usize = value.into_prime_index();
+                let u: usize = value.to_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
                 let b = self.0.checked_mul(p)?;
                 Some(Self(b, PhantomData))
@@ -207,7 +206,7 @@ macro_rules! prime_bag {
             /// Returns `None` if the bag does not contain `value`
             #[inline]
             pub fn try_remove(&self, value: E) -> Option<Self> {
-                let u: usize = value.into_prime_index();
+                let u: usize = value.to_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
 
                 match <$helpers_x>::div_exact(self.0, p) {
@@ -222,7 +221,7 @@ macro_rules! prime_bag {
             #[must_use]
             #[inline]
             pub fn try_insert_many(&self, value: E, count: u32) -> Option<Self> {
-                let u: usize = value.into_prime_index();
+                let u: usize = value.to_prime_index();
                 let p = <$helpers_x>::get_prime(u)?;
                 let p2 = p.checked_pow(count)?;
                 let b = self.0.checked_mul(p2)?;
@@ -401,7 +400,7 @@ mod tests {
     use super::*;
 
     impl PrimeBagElement for usize {
-        fn into_prime_index(&self) -> usize {
+        fn to_prime_index(&self) -> usize {
             *self
         }
 

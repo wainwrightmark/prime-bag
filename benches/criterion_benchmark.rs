@@ -135,7 +135,7 @@ count_2_3s!(count_2_3s_u128, PrimeBag128<MyElement>, u128);
 pub struct MyElement(usize);
 
 impl PrimeBagElement for MyElement {
-    fn into_prime_index(&self) -> usize {
+    fn to_prime_index(&self) -> usize {
         self.0
     }
 

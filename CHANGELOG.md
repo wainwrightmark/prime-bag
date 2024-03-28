@@ -14,6 +14,7 @@ Possible header types:
 ## v0.4 (unreleased)
 - `Features` added `EMPTY` constant
 - `Features` made some functions constant
+- `Breaking Changes` renamed `into_prime_index` to `to_prime_index`
 
 ## v0.3 (2023-03-19)
 
