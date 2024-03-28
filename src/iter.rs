@@ -81,28 +81,11 @@ macro_rules! prime_bag_iter {
                 DoubleEndedIterator::next_back(&mut self)
             }
 
-            fn count(mut self) -> usize
+            fn count(self) -> usize
             where
                 Self: Sized,
             {
-                let mut count = 0usize;
-
-                if self.prime_index == 0 {
-                    let tz = self.chunk.trailing_zeros();
-                    let Ok(new_chunk) = <$nonzero_ux>::try_from(self.chunk.get() >> tz) else {
-                        return count;
-                    };
-
-                    self.chunk = new_chunk;
-                    count += tz as usize;
-                    self.prime_index = 1;
-                }
-
-                while let Some(_) = self.next() {
-                    count += 1;
-                }
-
-                count
+                <$helpers_x>::count_chunk(self.chunk, self.prime_index)
             }
 
             fn nth(&mut self, mut n: usize) -> Option<Self::Item> {

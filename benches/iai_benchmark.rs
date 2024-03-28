@@ -99,10 +99,18 @@ fn get_bag_for_count() -> PrimeBag64<MyElement> {
 #[library_benchmark]
 #[bench::g0(get_bag_for_count(), 0)]
 #[bench::g3(get_bag_for_count(), 3)]
+#[bench::g5(get_bag_for_count(), 5)]
 #[bench::g6(get_bag_for_count(), 6)]
 #[bench::g7(get_bag_for_count(), 7)]
+#[bench::g30(get_bag_for_count(), 30)]
 fn is_count_at_least(bag: PrimeBag64<MyElement>, count: usize) -> bool {
     black_box(bag).is_count_at_least(black_box(count))
+}
+
+#[library_benchmark]
+#[bench::g0(get_bag_for_count())]
+fn count(bag: PrimeBag64<MyElement>)-> usize{
+    black_box(bag).count()
 }
 
 get_random_bags!(get_bags_u8, NonZeroU8, PrimeBag8<MyElement>);
@@ -136,7 +144,7 @@ count_2_3s!(count_2_3s_u128, get_bags_u128, PrimeBag128<MyElement>, u128);
 
 library_benchmark_group!(
     name = counts;
-    benchmarks = is_count_at_least, count_2_3s_u8, count_2_3s_u16, count_2_3s_u32, count_2_3s_u64, count_2_3s_u128
+    benchmarks = count, is_count_at_least, count_2_3s_u8, count_2_3s_u16, count_2_3s_u32, count_2_3s_u64, count_2_3s_u128
 );
 
 library_benchmark_group!(

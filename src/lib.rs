@@ -267,11 +267,6 @@ macro_rules! prime_bag {
                 let b = self.0.checked_mul(p2)?;
                 Some(Self(b, PhantomData))
             }
-            /// Returns the number of elements in the bag
-            /// You may want to use `is_count_at_least` instead
-            pub fn count(&self) -> usize {
-                self.into_iter().count()
-            }
         }
 
         impl<E> $bag_x<E> {
@@ -365,44 +360,66 @@ macro_rules! prime_bag {
                 Self(gcd, PhantomData)
             }
 
+            /// Returns the number of elements in the bag
+            /// You may want to use `is_count_at_least` instead
             #[inline]
             #[must_use]
+            pub const fn count(&self) -> usize {
+                <$helpers_x>::count_chunk(self.0, 0)
+            }
+
             /// Returns whether the count is greater than or equal to `min`
+            #[inline]
+            #[must_use]
             pub const fn is_count_at_least(&self, mut min: usize) -> bool {
-                let mut i = self.0.get();
-        
-                let tz = i.trailing_zeros() as usize;
-        
+                let mut chunk = self.0.get();
+
+                if let Some(new_min) = min.checked_sub(1usize) {
+                    min = new_min;
+                } else {
+                    return true;
+                }
+
+                let tz = chunk.trailing_zeros() as usize;
+
                 if let Some(new_min) = min.checked_sub(tz as usize) {
                     min = new_min;
                 } else {
                     return true;
                 }
-                i >>= tz; // always succeeds as i must have at least one 1
-        
+                chunk >>= tz; // always succeeds as i must have at least one 1
+
+                if chunk == 1 {
+                    return false;
+                }
+
                 let mut prime_index = 1usize;
                 let mut prime = 3;
-        
-                while i > 1 {
-                    if i % prime == 0 {
-                        i = i / prime;
-        
+
+                loop {
+                    if chunk % prime == 0 {
+                        chunk = chunk / prime;
+
                         if let Some(new_min) = min.checked_sub(1usize) {
                             min = new_min;
                         } else {
                             return true;
                         }
+
+                        if chunk == 1 {
+                            return false;
+                        }
                     } else {
                         prime_index += 1;
-                        prime = match <$helpers_x>::get_prime(prime_index){
+                        prime = match <$helpers_x>::get_prime(prime_index) {
                             Some(x) => x.get(),
                             None => {
+                                core::debug_assert!(false, "Prime index is out of range");
                                 return false;
-                            },
+                            }
                         }
                     }
                 }
-                return min == 0;
             }
         }
     };
