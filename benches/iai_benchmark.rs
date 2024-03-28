@@ -1,6 +1,6 @@
-use std::num::*;
-use std::hint::black_box;
 use iai_callgrind::{library_benchmark, library_benchmark_group, main};
+use std::hint::black_box;
+use std::num::*;
 
 use prime_bag::*;
 use rand::rngs::StdRng;
@@ -91,6 +91,20 @@ macro_rules! count_2_3s {
         }
     };
 }
+#[library_benchmark]
+fn count_is_at_least() -> usize {
+    let mut t = 0usize;
+    let bag =
+        PrimeBag64::<MyElement>::try_from_iter([0, 0, 0, 1, 1, 8].map(|x| MyElement(x))).unwrap();
+
+    loop {
+        if !black_box(bag).is_count_at_least(black_box(t)) {
+            return t;
+        } else {
+            t += 1;
+        }
+    }
+}
 
 get_random_bags!(get_bags_u8, NonZeroU8, PrimeBag8<MyElement>);
 get_random_bags!(get_bags_u16, NonZeroU16, PrimeBag16<MyElement>);
@@ -122,8 +136,8 @@ count_2_3s!(count_2_3s_u64, get_bags_u64, PrimeBag64<MyElement>, u64);
 count_2_3s!(count_2_3s_u128, get_bags_u128, PrimeBag128<MyElement>, u128);
 
 library_benchmark_group!(
-    name = count_2s_and_3s;
-    benchmarks = count_2_3s_u8, count_2_3s_u16, count_2_3s_u32, count_2_3s_u64, count_2_3s_u128
+    name = counts;
+    benchmarks = count_is_at_least, count_2_3s_u8, count_2_3s_u16, count_2_3s_u32, count_2_3s_u64, count_2_3s_u128
 );
 
 library_benchmark_group!(
@@ -136,4 +150,4 @@ library_benchmark_group!(
     benchmarks = intersect_all_u8, intersect_all_u16, intersect_all_u32, intersect_all_u64, intersect_all_u128
 );
 
-main!(library_benchmark_groups = count_2s_and_3s, union_all, intersect_all);
+main!(library_benchmark_groups = counts, union_all, intersect_all);

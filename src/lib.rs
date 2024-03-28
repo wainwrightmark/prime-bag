@@ -98,6 +98,27 @@ pub trait PrimeBagElement {
     fn from_prime_index(value: usize) -> Self;
 }
 
+impl<E: PrimeBagElement> PrimeBag64<E>
+{   
+    /// Returns whether the count is greater than or equal to `min`
+    pub fn is_count_at_least(&self, min: usize)-> bool{
+        let (min_count, max_count) = self.into_iter().size_hint();
+
+        if min_count >= min{
+            return true;
+        }
+        if let Some(max_count) = max_count{
+            if max_count < min{
+                return false;
+            }
+        }
+
+        let count = self.count();
+
+        return count >= min ;
+    }
+}
+
 macro_rules! prime_bag {
     ($bag_x: ident, $helpers_x: ty, $nonzero_ux: ty, $ux: ty) => {
         /// Represents a bag (multi-set) of elements
@@ -780,5 +801,17 @@ mod tests {
         let bag = PrimeBag128::<usize>::EMPTY;
 
         assert!(bag.is_empty());
+    }
+
+    #[test]
+    pub fn test_count_is_at_least(){    
+        assert!(!PrimeBag64::<usize>::EMPTY.is_count_at_least(1));
+
+        let bag = PrimeBag64::<usize>::try_from_iter([0,0,0,1,1,8]).unwrap();
+
+        for x in 0..=6{
+         assert!(bag.is_count_at_least(x));
+        }
+        assert!(!bag.is_count_at_least(7));
     }
 }
