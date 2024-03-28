@@ -1,5 +1,5 @@
 #![cfg_attr(not(any(test, feature = "std")), no_std)]
-#![doc(html_root_url = "https://docs.rs/prime_bag/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/prime_bag/0.4.0")]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
 #![deny(warnings, dead_code, unused_imports, unused_mut)]
@@ -116,21 +116,7 @@ macro_rules! prime_bag {
         }
 
         impl<E: PrimeBagElement> $bag_x<E> {
-            /// Create a bag from the inner value
-            /// This can be used to convert a bag from one type to another or to enable serialization
-            #[inline]
-            #[must_use]
-            pub fn from_inner(inner: $nonzero_ux) -> Self {
-                Self(inner, PhantomData)
-            }
-
-            /// Convert the bag to the inner value
-            /// This can be used to convert a bag from one type to another or to enable serialization
-            #[inline]
-            #[must_use]
-            pub fn into_inner(self) -> $nonzero_ux {
-                self.0
-            }
+            
 
             /// Try to extend the bag with elements from an iterator.
             /// Does not modify this bag.
@@ -245,6 +231,26 @@ macro_rules! prime_bag {
         }
 
         impl<E> $bag_x<E> {
+
+            /// An empty bag
+            pub const EMPTY: Self = Self(<$nonzero_ux>::MIN, PhantomData);
+
+            /// Create a bag from the inner value
+            /// This can be used to convert a bag from one type to another or to enable serialization
+            #[inline]
+            #[must_use]
+            pub const fn from_inner(inner: $nonzero_ux) -> Self {
+                Self(inner, PhantomData)
+            }
+
+            /// Convert the bag to the inner value
+            /// This can be used to convert a bag from one type to another or to enable serialization
+            #[inline]
+            #[must_use]
+            pub const fn into_inner(self) -> $nonzero_ux {
+                self.0
+            }
+
             /// Returns whether this is a superset of the `rhs` bag.
             /// This is true if every element in the `rhs` bag is contained at least as many times in this.
             /// Note that this will also return true if the two bags are equal.
@@ -686,6 +692,8 @@ mod tests {
         }
     }
 
+
+
     #[test]
     pub fn test_iter_reverse() {
         let expected: Vec<usize> = vec![0, 0, 0, 1, 1, 2, 2, 3, 3, 5, 7, 13, 19];
@@ -716,5 +724,12 @@ mod tests {
         let bag = PrimeBag128::<usize>::try_from_iter(expected.clone()).unwrap();
 
         assert_eq!(expected.last().copied(), bag.into_iter().last());
+    }
+
+    #[test]
+    pub fn test_empty(){
+        let bag = PrimeBag128::<usize>::EMPTY;
+
+        assert!(bag.is_empty());
     }
 }
