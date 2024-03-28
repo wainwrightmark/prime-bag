@@ -98,27 +98,6 @@ pub trait PrimeBagElement {
     fn from_prime_index(value: usize) -> Self;
 }
 
-impl<E: PrimeBagElement> PrimeBag64<E>
-{   
-    /// Returns whether the count is greater than or equal to `min`
-    pub fn is_count_at_least(&self, min: usize)-> bool{
-        let (min_count, max_count) = self.into_iter().size_hint();
-
-        if min_count >= min{
-            return true;
-        }
-        if let Some(max_count) = max_count{
-            if max_count < min{
-                return false;
-            }
-        }
-
-        let count = self.count();
-
-        return count >= min ;
-    }
-}
-
 macro_rules! prime_bag {
     ($bag_x: ident, $helpers_x: ty, $nonzero_ux: ty, $ux: ty) => {
         /// Represents a bag (multi-set) of elements
@@ -141,37 +120,36 @@ macro_rules! prime_bag {
                 self.0 == other.0 && self.1 == other.1
             }
         }
-        
+
         impl<E> Eq for $bag_x<E> {}
-        
+
         impl<E> Ord for $bag_x<E> {
             fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                 self.0.cmp(&other.0)
             }
         }
-        
+
         impl<E> PartialOrd for $bag_x<E> {
             fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                 Some(self.cmp(other))
             }
         }
-        
+
         impl<E> Hash for $bag_x<E> {
             fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
                 self.0.hash(state);
             }
         }
-        
+
         impl<E> Debug for $bag_x<E> {
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 f.debug_tuple("PrimeBag128").field(&self.0).finish()
             }
         }
 
-        impl<E> Copy for $bag_x<E>{
-        }
+        impl<E> Copy for $bag_x<E> {}
 
-        impl<E> Clone for $bag_x<E>{
+        impl<E> Clone for $bag_x<E> {
             #[inline]
             fn clone(&self) -> Self {
                 Self(self.0, self.1)
@@ -179,8 +157,6 @@ macro_rules! prime_bag {
         }
 
         impl<E: PrimeBagElement> $bag_x<E> {
-
-
             /// Try to extend the bag with elements from an iterator.
             /// Does not modify this bag.
             /// Returns `None` if the resulting bag would be too large
@@ -293,15 +269,12 @@ macro_rules! prime_bag {
             }
             /// Returns the number of elements in the bag
             /// You may want to use `is_count_at_least` instead
-            pub fn count(&self)-> usize{
+            pub fn count(&self) -> usize {
                 self.into_iter().count()
             }
-
-
         }
 
         impl<E> $bag_x<E> {
-
             /// An empty bag
             pub const EMPTY: Self = Self(<$nonzero_ux>::MIN, PhantomData);
 
@@ -392,7 +365,45 @@ macro_rules! prime_bag {
                 Self(gcd, PhantomData)
             }
 
-
+            #[inline]
+            #[must_use]
+            /// Returns whether the count is greater than or equal to `min`
+            pub const fn is_count_at_least(&self, mut min: usize) -> bool {
+                let mut i = self.0.get();
+        
+                let tz = i.trailing_zeros() as usize;
+        
+                if let Some(new_min) = min.checked_sub(tz as usize) {
+                    min = new_min;
+                } else {
+                    return true;
+                }
+                i >>= tz; // always succeeds as i must have at least one 1
+        
+                let mut prime_index = 1usize;
+                let mut prime = 3;
+        
+                while i > 1 {
+                    if i % prime == 0 {
+                        i = i / prime;
+        
+                        if let Some(new_min) = min.checked_sub(1usize) {
+                            min = new_min;
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        prime_index += 1;
+                        prime = match <$helpers_x>::get_prime(prime_index){
+                            Some(x) => x.get(),
+                            None => {
+                                return false;
+                            },
+                        }
+                    }
+                }
+                return min == 0;
+            }
         }
     };
 }
@@ -804,13 +815,13 @@ mod tests {
     }
 
     #[test]
-    pub fn test_count_is_at_least(){    
+    pub fn test_count_is_at_least() {
         assert!(!PrimeBag64::<usize>::EMPTY.is_count_at_least(1));
 
-        let bag = PrimeBag64::<usize>::try_from_iter([0,0,0,1,1,8]).unwrap();
+        let bag = PrimeBag64::<usize>::try_from_iter([0, 0, 0, 1, 1, 8]).unwrap();
 
-        for x in 0..=6{
-         assert!(bag.is_count_at_least(x));
+        for x in 0..=6 {
+            assert!(bag.is_count_at_least(x));
         }
         assert!(!bag.is_count_at_least(7));
     }

@@ -16,7 +16,8 @@ Possible header types:
 - `Features` made some functions constant
 - `Breaking Changes` renamed `into_prime_index` to `to_prime_index`
 - Manually implemented various traits to make them not depending on `E` having the trait
-- `Features` Added `count` method
+- `Features` added `count` method
+- `Features` added `is_count_at_least` method
 
 ## v0.3 (2023-03-19)
 
