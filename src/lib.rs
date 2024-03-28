@@ -66,6 +66,8 @@ mod helpers;
 /// Iterator of elements
 pub mod iter;
 
+use core::fmt::Debug;
+use core::hash::Hash;
 use core::marker::PhantomData;
 use core::num::{NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize};
 use group_iter::{
@@ -83,7 +85,7 @@ use crate::{
 /// And that number must map back to that element.
 /// To maximize possible bag size and performance, use the lowest numbers possible and assign lower numbers to more common elements.
 /// The element which maps to `0` will be able to use compiler intrinsics for some operations, particularly `count_instances` making them much faster
-pub trait PrimeBagElement {    
+pub trait PrimeBagElement {
     /// The index of this element.
     /// This should be a different value for each element
     /// Only values in the range `0..32` are valid unless the `primes256` feature is specified, in which case the range in `0..256`
@@ -101,7 +103,6 @@ macro_rules! prime_bag {
         /// Represents a bag (multi-set) of elements
         /// The bag will have a maximum capacity
         /// Use larger sized bags (e.g. `PrimeBag64`, `PrimeBag128`) to store more elements
-        #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Ord, Eq, Hash)]
         pub struct $bag_x<E>($nonzero_ux, PhantomData<E>);
 
         assert_eq_size!($bag_x<usize>, $ux);
@@ -114,8 +115,50 @@ macro_rules! prime_bag {
             }
         }
 
+        impl<E> PartialEq for $bag_x<E> {
+            fn eq(&self, other: &Self) -> bool {
+                self.0 == other.0 && self.1 == other.1
+            }
+        }
+        
+        impl<E> Eq for $bag_x<E> {}
+        
+        impl<E> Ord for $bag_x<E> {
+            fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+                self.0.cmp(&other.0)
+            }
+        }
+        
+        impl<E> PartialOrd for $bag_x<E> {
+            fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+                Some(self.cmp(other))
+            }
+        }
+        
+        impl<E> Hash for $bag_x<E> {
+            fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+                self.0.hash(state);
+            }
+        }
+        
+        impl<E> Debug for $bag_x<E> {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                f.debug_tuple("PrimeBag128").field(&self.0).finish()
+            }
+        }
+
+        impl<E> Copy for $bag_x<E>{
+        }
+
+        impl<E> Clone for $bag_x<E>{
+            #[inline]
+            fn clone(&self) -> Self {
+                Self(self.0, self.1)
+            }
+        }
+
         impl<E: PrimeBagElement> $bag_x<E> {
-            
+
 
             /// Try to extend the bag with elements from an iterator.
             /// Does not modify this bag.
@@ -227,6 +270,13 @@ macro_rules! prime_bag {
                 let b = self.0.checked_mul(p2)?;
                 Some(Self(b, PhantomData))
             }
+            /// Returns the number of elements in the bag
+            /// You may want to use `is_count_at_least` instead
+            pub fn count(&self)-> usize{
+                self.into_iter().count()
+            }
+
+
         }
 
         impl<E> $bag_x<E> {
@@ -320,6 +370,8 @@ macro_rules! prime_bag {
                 let gcd = <$helpers_x>::gcd(self.0, rhs.0);
                 Self(gcd, PhantomData)
             }
+
+
         }
     };
 }
@@ -691,8 +743,6 @@ mod tests {
         }
     }
 
-
-
     #[test]
     pub fn test_iter_reverse() {
         let expected: Vec<usize> = vec![0, 0, 0, 1, 1, 2, 2, 3, 3, 5, 7, 13, 19];
@@ -726,7 +776,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_empty(){
+    pub fn test_empty() {
         let bag = PrimeBag128::<usize>::EMPTY;
 
         assert!(bag.is_empty());
