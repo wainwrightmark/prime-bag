@@ -92,23 +92,23 @@ macro_rules! count_2_3s {
     };
 }
 
-fn get_bag_for_count() -> PrimeBag64<MyElement> {
+fn count_bag() -> PrimeBag64<MyElement> {
     PrimeBag64::<MyElement>::try_from_iter([0, 0, 0, 1, 1, 8].map(|x| MyElement(x))).unwrap()
 }
 
 #[library_benchmark]
-#[bench::g0(get_bag_for_count(), 0)]
-#[bench::g3(get_bag_for_count(), 3)]
-#[bench::g5(get_bag_for_count(), 5)]
-#[bench::g6(get_bag_for_count(), 6)]
-#[bench::g7(get_bag_for_count(), 7)]
-#[bench::g30(get_bag_for_count(), 30)]
+#[bench::g0(count_bag(), 0)]
+#[bench::g3(count_bag(), 3)]
+#[bench::g5(count_bag(), 5)]
+#[bench::g6(count_bag(), 6)]
+#[bench::g7(count_bag(), 7)]
+#[bench::g30(count_bag(), 30)]
 fn is_count_at_least(bag: PrimeBag64<MyElement>, count: usize) -> bool {
     black_box(bag).is_count_at_least(black_box(count))
 }
 
 #[library_benchmark]
-#[bench::g0(get_bag_for_count())]
+#[bench::g0(count_bag())]
 fn count(bag: PrimeBag64<MyElement>)-> usize{
     black_box(bag).count()
 }
