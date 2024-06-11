@@ -421,6 +421,48 @@ macro_rules! prime_bag {
                     }
                 }
             }
+
+            /// Returns a copy of `self` with duplicate items removed
+            #[inline]
+            #[must_use]
+            pub const fn dedup(&self) -> Self {
+                let mut chunk = self.0;
+                let mut result: $nonzero_ux;
+                let tz = chunk.trailing_zeros();
+                if tz > 0 {
+                    let Some(chunk1) = <$nonzero_ux>::new(chunk.get() >> tz) else {
+                        unreachable!()
+                    };
+                    chunk = chunk1;
+
+                    const TWO: $nonzero_ux = <$nonzero_ux>::MIN.saturating_add(1);
+                    result = TWO
+                } else {
+                    result = <$nonzero_ux>::MIN;
+                }
+
+                let mut prime_index = 1;
+
+                while chunk.get() > 1 {
+                    let Some(prime) = <$helpers_x>::get_prime(prime_index) else {
+                        core::debug_assert!(false, "Prime index is out of range");
+                        return Self::from_inner(result);
+                    };
+
+                    if let Some(new_chunk) = <$helpers_x>::div_exact(chunk, prime) {
+                        chunk = new_chunk;
+
+                        while let Some(new_chunk) = <$helpers_x>::div_exact(chunk, prime) {
+                            chunk = new_chunk;
+                        }
+
+                        result = result.saturating_mul(prime);
+                    }
+                    prime_index += 1;
+                }
+
+                return Self::from_inner(result);
+            }
         }
     };
 }
@@ -841,5 +883,19 @@ mod tests {
             assert!(bag.is_count_at_least(x));
         }
         assert!(!bag.is_count_at_least(7));
+    }
+
+    #[test]
+    pub fn test_dedup() {
+        for (input, expected) in [
+            (vec![0, 0, 0, 1, 1, 1, 3, 4, 4], vec![0, 1, 3, 4]),
+            (vec![3, 3, 4], vec![3, 4]),
+        ] {
+            let bag = PrimeBag128::<usize>::try_from_iter(input).unwrap();
+            let expected = PrimeBag128::<usize>::try_from_iter(expected).unwrap();
+            let deduped = bag.dedup();
+
+            assert_eq!(deduped, expected);
+        }
     }
 }
