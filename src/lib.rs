@@ -152,7 +152,7 @@ macro_rules! prime_bag {
         impl<E> Clone for $bag_x<E> {
             #[inline]
             fn clone(&self) -> Self {
-                Self(self.0, self.1)
+                *self
             }
         }
 
@@ -398,7 +398,7 @@ macro_rules! prime_bag {
 
                 loop {
                     if chunk % prime == 0 {
-                        chunk = chunk / prime;
+                        chunk /= prime;
 
                         if let Some(new_min) = min.checked_sub(1usize) {
                             min = new_min;
@@ -426,6 +426,8 @@ macro_rules! prime_bag {
             #[inline]
             #[must_use]
             pub const fn dedup(&self) -> Self {
+                const TWO: $nonzero_ux = <$nonzero_ux>::MIN.saturating_add(1);
+
                 let mut chunk = self.0;
                 let mut result: $nonzero_ux;
                 let tz = chunk.trailing_zeros();
@@ -435,7 +437,6 @@ macro_rules! prime_bag {
                     };
                     chunk = chunk1;
 
-                    const TWO: $nonzero_ux = <$nonzero_ux>::MIN.saturating_add(1);
                     result = TWO
                 } else {
                     result = <$nonzero_ux>::MIN;
@@ -539,7 +540,6 @@ group_iterator!(PrimeBag128<E>, PrimeBagGroupIter128<E>);
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     impl PrimeBagElement for usize {
@@ -897,5 +897,46 @@ mod tests {
 
             assert_eq!(deduped, expected);
         }
+    }
+
+    #[test]
+    pub fn test_trait_impls() {
+        struct MyElement(usize);
+
+        impl PrimeBagElement for MyElement {
+            fn to_prime_index(&self) -> usize {
+                self.0
+            }
+
+            fn from_prime_index(value: usize) -> Self {
+                Self(value)
+            }
+        }
+
+        macro_rules! is_trait {
+            ($name:ty, $trait_name:path) => {{
+                trait __InnerMarkerTrait {
+                    fn __is_trait_inner_method() -> bool {
+                        false
+                    }
+                }
+                struct __TraitTest<T>(T);
+                impl<T: $trait_name> __TraitTest<T> {
+                    fn __is_trait_inner_method() -> bool {
+                        true
+                    }
+                }
+                impl<T> __InnerMarkerTrait for __TraitTest<T> {}
+                __TraitTest::<$name>::__is_trait_inner_method()
+            }};
+        }
+
+        assert!(is_trait!(PrimeBag128<MyElement>, Copy));
+        assert!(is_trait!(PrimeBag128<MyElement>, Clone));
+        assert!(is_trait!(PrimeBag128<MyElement>, PartialEq));
+        assert!(is_trait!(PrimeBag128<MyElement>, Eq));
+        assert!(is_trait!(PrimeBag128<MyElement>, Hash));
+        assert!(is_trait!(PrimeBag128<MyElement>, Ord));
+        assert!(is_trait!(PrimeBag128<MyElement>, PartialOrd));
     }
 }

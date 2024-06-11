@@ -123,7 +123,7 @@ macro_rules! helpers {
 
                 loop {
                     if chunk % prime == 0 {
-                        chunk = chunk / prime;
+                        chunk /= prime;
                         count += 1;
                         if chunk == 1 {
                             return count;

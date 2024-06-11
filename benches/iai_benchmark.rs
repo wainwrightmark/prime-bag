@@ -93,7 +93,7 @@ macro_rules! count_2_3s {
 }
 
 fn count_bag() -> PrimeBag64<MyElement> {
-    PrimeBag64::<MyElement>::try_from_iter([0, 0, 0, 1, 1, 8].map(|x| MyElement(x))).unwrap()
+    PrimeBag64::<MyElement>::try_from_iter([0, 0, 0, 1, 1, 8].map(MyElement)).unwrap()
 }
 
 #[library_benchmark]
